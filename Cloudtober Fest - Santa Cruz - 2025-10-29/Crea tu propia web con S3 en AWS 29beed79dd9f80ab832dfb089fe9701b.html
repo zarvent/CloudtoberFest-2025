@@ -1,0 +1,743 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Crea tu propia web con S3 en AWS</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.collection-content td {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.callout img.notion-static-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.callout p {
+	margin: 0;
+}
+
+.callout h1,
+.callout h2,
+.callout h3 {
+	margin: 0 0 0.6rem;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+blockquote.quote-large {
+	font-size: 1.25em;
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.highlight-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.highlight-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.highlight-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.highlight-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.highlight-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.highlight-default_background {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray_background {
+	background: rgba(42, 28, 0, 0.07);
+}
+.highlight-brown_background {
+	background: rgba(139, 46, 0, 0.086);
+}
+.highlight-orange_background {
+	background: rgba(224, 101, 1, 0.129);
+}
+.highlight-yellow_background {
+	background: rgba(211, 168, 0, 0.137);
+}
+.highlight-teal_background {
+	background: rgba(0, 100, 45, 0.09);
+}
+.highlight-blue_background {
+	background: rgba(0, 124, 215, 0.094);
+}
+.highlight-purple_background {
+	background: rgba(102, 0, 178, 0.078);
+}
+.highlight-pink_background {
+	background: rgba(197, 0, 93, 0.086);
+}
+.highlight-red_background {
+	background: rgba(223, 22, 0, 0.094);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.block-color-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.block-color-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.block-color-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.block-color-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.block-color-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(240, 239, 237, 1);
+}
+.block-color-brown_background {
+	background: rgba(245, 237, 233, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 235, 222, 1);
+}
+.block-color-yellow_background {
+	background: rgba(249, 243, 220, 1);
+}
+.block-color-teal_background {
+	background: rgba(232, 241, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(229, 242, 252, 1);
+}
+.block-color-purple_background {
+	background: rgba(243, 235, 249, 1);
+}
+.block-color-pink_background {
+	background: rgba(250, 233, 241, 1);
+}
+.block-color-red_background {
+	background: rgba(252, 233, 231, 1);
+}
+.select-value-color-default { background-color: rgba(42, 28, 0, 0.07); }
+.select-value-color-gray { background-color: rgba(28, 19, 1, 0.11); }
+.select-value-color-brown { background-color: rgba(127, 51, 0, 0.156); }
+.select-value-color-orange { background-color: rgba(196, 88, 0, 0.203); }
+.select-value-color-yellow { background-color: rgba(209, 156, 0, 0.282); }
+.select-value-color-green { background-color: rgba(0, 96, 38, 0.156); }
+.select-value-color-blue { background-color: rgba(0, 118, 217, 0.203); }
+.select-value-color-purple { background-color: rgba(92, 0, 163, 0.141); }
+.select-value-color-pink { background-color: rgba(183, 0, 78, 0.152); }
+.select-value-color-red { background-color: rgba(206, 24, 0, 0.164); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+</style></head><body><article id="29beed79-dd9f-80ab-832d-fb089fe9701b" class="page sans"><header><img class="page-cover-image" src="https://www.notion.so/images/page-cover/solid_blue.png" style="object-position:center 40%"/><div class="page-header-icon page-header-icon-with-cover"><span class="icon">🗣️</span></div><h1 class="page-title">Crea tu propia web con S3 en AWS</h1><p class="page-description"></p></header><div class="page-body"><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">🎙️voice memo</summary><div class="indented"><figure id="29beed79-dd9f-80f8-8d7b-cad44d1d88c1"><div class="source"><a href="Crea%20tu%20propia%20web%20con%20S3%20en%20AWS/2025-10-29_Dariana_y_Nicole.m4a">attachment:c0605e36-7e0b-46e1-8892-3b8b80c7aff3:2025-10-29_Dariana_y_Nicole.m4a</a></div></figure></div></details><figure class="block-color-purple_background callout" style="white-space:pre-wrap;display:flex" id="29ceed79-dd9f-80ab-99fa-f01186040889"><div style="font-size:1.5em"><img class="icon notion-static-icon" src="https://www.notion.so/icons/video-camera_purple.svg"/></div><div style="width:100%"><figure id="29ceed79-dd9f-80ba-bd0d-d7ccc944dad8"><div class="source"><a href="Crea%20tu%20propia%20web%20con%20S3%20en%20AWS/Pgina_Web_con_AWS_S3.mp4">attachment:ae1ab6d1-207e-448c-a63a-0e4006241b02:Pgina_Web_con_AWS_S3.mp4</a></div></figure></div></figure><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">📰 briefing doc simplified</summary><div class="indented"><p id="29ceed79-dd9f-800c-af47-f2afc74c35d7" class="">Este documento resume la presentación &quot;Cómo crear tu propia web con S3 en AWS&quot;, impartida por las estudiantes universitarias Dariana Pamayo y Nicole Ada León en un evento del AWS User Group de Santa Cruz. La charla ofreció una guía práctica y accesible para alojar sitios web estáticos con Amazon S3, un servicio de almacenamiento de objetos de Amazon Web Services.</p><p id="29ceed79-dd9f-8005-b4fd-f5e3d9912f6d" class="">Las presentadoras, líderes emergentes en la comunidad tecnológica local y promotoras del primer Cloud Club para estudiantes en Santa Cruz, estructuraron la sesión en tres partes: introducción a conceptos fundamentales, demostración práctica paso a paso y casos de uso. El contenido abarcó desde el flujo básico de una petición web hasta la configuración técnica de un bucket de S3, incluyendo políticas de permisos y habilitación del alojamiento web. La presentación destacó la simplicidad y potencia de S3 para proyectos como páginas de perfil profesional (landing pages) y blogs—contenido que no requiere interacción con bases de datos ni actualizaciones constantes. El evento también sirvió como plataforma para el aprendizaje y networking dentro de la comunidad local de AWS.</p><h2 id="29ceed79-dd9f-80dd-8563-e13c965dfd1a" class="">Introducción y Presentadoras</h2><p id="29ceed79-dd9f-8041-92a2-cc556360bffa" class="">La charla fue dirigida por dos estudiantes de la Universidad Católica, futuras líderes en la comunidad tecnológica de Santa Cruz.</p><ul id="29ceed79-dd9f-802d-8529-f12dc66a0624" class="bulleted-list"><li style="list-style-type:disc"><strong>Dariana Pamayo:</strong> Estudiante de segundo año de Ingeniería de Software. Su interés por las tecnologías en la nube surgió a partir de un curso y un viaje académico. Es postulante a presidenta del primer Cloud Club de la universidad, una iniciativa para estudiantes que promueve el conocimiento de AWS a través de eventos y colaboración mutua, con aprobación formal esperada en noviembre.</li></ul><ul id="29ceed79-dd9f-8028-8a32-f8cffe1a2250" class="bulleted-list"><li style="list-style-type:disc"><strong>Nicole Ada León:</strong> Estudiante de Ingeniería de Inteligencia Artificial. Se describió como el &quot;apoyo moral&quot; de Dariana, enfatizando que un líder siempre necesita una comunidad que lo respalde. Su objetivo en la charla fue fomentar un ambiente de aprendizaje mutuo, donde estudiantes y profesionales puedan compartir conocimientos, sin importar cuán básicos parezcan.</li></ul><h2 id="29ceed79-dd9f-80af-8e86-ffbc085ad795" class="">Análisis del Contenido</h2><p id="29ceed79-dd9f-8073-834c-c25465215311" class="">La sesión proporcionó los conocimientos teóricos y prácticos necesarios para desplegar un sitio web estático en AWS.</p><h3 id="29ceed79-dd9f-801c-bbf3-f4e383792c5a" class="">Fundamentos de las Páginas Web y AWS</h3><p id="29ceed79-dd9f-8037-b642-fcd7c4008c47" class="">Para establecer una base común, las presentadoras explicaron el flujo de una petición web mediante un diagrama con cinco componentes principales:</p><ol type="1" id="29ceed79-dd9f-80cf-b751-d082ba019a36" class="numbered-list" start="1"><li><strong>Usuario:</strong> Realiza una búsqueda desde un dispositivo (computadora, celular, etc.).</li></ol><ol type="1" id="29ceed79-dd9f-8013-997b-d6819734a57a" class="numbered-list" start="2"><li><strong>Navegador:</strong> Actúa como intermediario, tomando la petición del usuario.</li></ol><ol type="1" id="29ceed79-dd9f-804d-a246-f9db8b776c24" class="numbered-list" start="3"><li><strong>Internet:</strong> La &quot;carretera&quot; que transporta la petición a su destino.</li></ol><ol type="1" id="29ceed79-dd9f-801e-9281-e5e45f847561" class="numbered-list" start="4"><li><strong>AWS (Amazon Web Services):</strong> El destino de la petición. Se describe como un servicio de Amazon que &quot;alquila o renta espacios de memoria de sus máquinas que son supergigantes&quot;. En este caso, el servicio específico es S3.</li></ol><ol type="1" id="29ceed79-dd9f-80fa-9c9f-f7edb508742d" class="numbered-list" start="5"><li><strong>S3:</strong> Recibe la petición, la procesa y devuelve la respuesta, que viaja de regreso al usuario por el mismo camino (Internet y Navegador).</li></ol><h3 id="29ceed79-dd9f-80a4-a27a-d1a707bcf771" class="">Conceptos Clave</h3><p id="29ceed79-dd9f-80d2-8830-c5213a4eff96" class="">Se definieron varios términos esenciales para comprender la solución propuesta.</p><table id="29ceed79-dd9f-8068-9c09-d4b7b3dd7d33" class="simple-table"><tbody><tr id="29ceed79-dd9f-80cd-ae2a-ea76a2890398"><td id="u}=]" class="">Concepto</td><td id="UkCo" class="">Descripción</td></tr><tr id="29ceed79-dd9f-8056-b6e3-f8eeeec47e76"><td id="u}=]" class=""><strong>Sitio Web Estático</strong></td><td id="UkCo" class="">Un sitio web que no requiere actualizaciones constantes y no interactúa con bases de datos. Los usuarios solo pueden ver el contenido, similar a un blog. S3 está diseñado para este tipo de sitios.</td></tr><tr id="29ceed79-dd9f-803a-8472-fbfe972051ef"><td id="u}=]" class=""><strong>Sitio Web Dinámico</strong></td><td id="UkCo" class="">Un sitio que se conecta con bases de datos y necesita edición y mantenimiento constantes para interactuar con los datos de los usuarios.</td></tr><tr id="29ceed79-dd9f-80e9-96c3-c21ed464853f"><td id="u}=]" class=""><strong>Almacenamiento por Objetos (S3)</strong></td><td id="UkCo" class="">A diferencia del almacenamiento por bloques o archivos, cada dato se guarda como un &quot;objeto&quot; con un nombre único. Se asemeja a una &quot;caja donde puedes almacenar diferentes tipos de datos&quot;, desde archivos<code>index.html</code>hasta bases de datos completas.</td></tr><tr id="29ceed79-dd9f-8014-9968-fb44f79c8684"><td id="u}=]" class=""><strong>Bucket de S3</strong></td><td id="UkCo" class="">El contenedor principal en S3 para almacenar archivos (objetos). Se utilizó la analogía de una &quot;caja de mudanza&quot; donde:&lt;ul&gt;&lt;li&gt;El<strong>bucket</strong>es la caja.&lt;/li&gt;&lt;li&gt;Los<strong>archivos</strong>son los objetos dentro de la caja.&lt;/li&gt;&lt;li&gt;El<strong>nombre del bucket</strong>es la etiqueta única de la caja, que debe estar en minúsculas y ser único globalmente.&lt;/li&gt;&lt;li&gt;La<strong>región de AWS</strong>es la ubicación física del servidor donde se almacena la caja (p. ej., Virginia o São Paulo).&lt;/li&gt;&lt;/ul&gt;</td></tr></tbody></table><h2 id="29ceed79-dd9f-807b-a8e4-c0af1f550d5b" class="">Guía Práctica: Creación de un Sitio Web con S3</h2><p id="29ceed79-dd9f-8083-abac-f3d8cf190f54" class="">La presentación incluyó una demostración en video del proceso técnico para configurar un sitio web estático. Se mencionó que los nuevos usuarios de AWS disponen de una capa gratuita (5 GB) que es &quot;más que suficiente para notionesta prueba&quot;.</p><h3 id="29ceed79-dd9f-8045-9026-d95b413ad3fb" class="">Paso 1: Creación del Bucket</h3><ol type="1" id="29ceed79-dd9f-8070-acc6-fd56660b9917" class="numbered-list" start="1"><li><strong>Acceder a la Consola de AWS:</strong> Buscar el servicio S3.</li></ol><ol type="1" id="29ceed79-dd9f-8069-91c5-e68aa28ea13f" class="numbered-list" start="2"><li><strong>Iniciar la Creación:</strong> Hacer clic en &quot;Create bucket&quot;.</li></ol><ol type="1" id="29ceed79-dd9f-80c5-ad81-cf3e1404eb39" class="numbered-list" start="3"><li><strong>Configurar el Bucket:</strong><ul notionid="29ceed79-dd9f-808b-be27-d9dca460952d" class="bulleted-list"><li notionstyle="list-style-type:disc"><strong>Nombre del Bucket:</strong> Asignar un nombre único global en minúsculas.</li></ul><ul id="29ceed79-dd9f-8066-9673-c9ea6b47163b" class="bulleted-list"><li style="list-style-type:disc"><strong>Región de AWS:</strong> Seleccionar la ubicación del servidor. São Paulo (SP) es la más cercana y ofrece menor latencia.</li></ul><ul id="29ceed79-dd9f-801e-ba90-f7de7b7a892a" class="bulleted-list"><li style="list-style-type:disc"><strong>Acceso Público:</strong> Desbloquear el acceso público para que el sitio sea visible en internet.</li></ul><ul id="29ceed79-dd9f-80a7-bb5d-eb7aedeada98" class="bulleted-list"><li style="list-style-type:disc"><strong>Configuraciones Adicionales:</strong> Dejar las opciones de versionamiento, etiquetas (tags) y encriptación con sus valores por defecto.</li></ul></li></ol><ol type="1" id="29ceed79-dd9f-8019-b12b-c09e0d640c01" class="numbered-list" start="4"><li><strong>Finalizar:</strong> Confirmar la creación del bucket.</li></ol><h3 id="29ceed79-dd9f-8015-82d1-d0f6d0a065d9" class="">Paso 2: Habilitación del Alojamiento de Sitio Web Estático</h3><ol type="1" id="29ceed79-dd9f-802b-8250-c826d30a62e9" class="numbered-list" start="1"><li><strong>Acceder al Bucket:</strong> Seleccionar el bucket recién creado.</li></ol><ol type="1" id="29ceed79-dd9f-8082-9e9f-c04610ce93c4" class="numbered-list" start="2"><li><strong>Ir a Propiedades:</strong> Navegar a la pestaña &quot;Propiedades&quot;.</li></ol><ol type="1" id="29ceed79-dd9f-8036-adaa-e581b28c35c9" class="numbered-list" start="3"><li><strong>Editar Alojamiento:</strong> Buscar la sección &quot;Static website hosting&quot; al final de la página y hacer clic en &quot;Editar&quot;.</li></ol><ol type="1" id="29ceed79-dd9f-8064-bb81-f8f030d4ca89" class="numbered-list" start="4"><li><strong>Habilitar:</strong> Activar la opción de alojamiento de sitio web estático.</li></ol><ol type="1" id="29ceed79-dd9f-80c3-bb6d-c906aa0b1db6" class="numbered-list" start="5"><li><strong>Definir Documentos:</strong><ul id="29ceed79-dd9f-805b-9ecd-fbae4e9a7b9f" class="bulleted-list"><li style="list-style-type:disc"><strong>Documento de índice:</strong> Especificar el archivo principal de la web (p. ej., <code>index.html</code>).</li></ul><ul id="29ceed79-dd9f-80aa-a622-ecf67ffaa6dd" class="bulleted-list"><li style="list-style-type:disc"><strong>Documento de error (opcional):</strong> Especificar una página para mostrar en caso de error (p. ej., <code>error.html</code>).</li></ul></li></ol><h3 id="29ceed79-dd9f-8008-955f-c77da020c57b" class="">Paso 3: Configuración de Permisos (Política del Bucket)</h3><ol type="1" id="29ceed79-dd9f-800d-8ad4-edd3d589f1fc" class="numbered-list" start="1"><li><strong>Ir a Permisos:</strong> Navegar a la pestaña &quot;Permisos&quot; del bucket.</li></ol><ol type="1" id="29ceed79-dd9f-8060-a209-c70c769563d0" class="numbered-list" start="2"><li><strong>Editar Política:</strong> Hacer clic en &quot;Edit&quot; en la sección &quot;Bucket policy&quot;.</li></ol><ol type="1" id="29ceed79-dd9f-80b1-9030-c12b1458b850" class="numbered-list" start="3"><li><strong>Aplicar Política JSON:</strong> Pegar una política en formato JSON para otorgar permisos de lectura pública. La regla principal permite a todos los usuarios (<code>&quot;Principal&quot;: &quot;*&quot;</code>) realizar la acción de obtener objetos (<code>&quot;Action&quot;: &quot;s3:GetObject&quot;</code>), lo que significa que &quot;todos pueden solo leerlo, no pueden tocarlo, no pueden cambiar nada&quot;.</li></ol><h3 id="29ceed79-dd9f-80b9-8d5f-d40f95403bb5" class="">Paso 4: Carga de Archivos</h3><ol type="1" id="29ceed79-dd9f-80a5-95d9-f4194e250d04" class="numbered-list" start="1"><li><strong>Subir Contenido:</strong> Dentro del bucket, usar la opción para cargar los archivos del sitio web (<code>index.html</code>, CSS, imágenes, etc.).</li></ol><ol type="1" id="29ceed79-dd9f-8045-8d3d-d7dda841b942" class="numbered-list" start="2"><li><strong>Buena Práctica:</strong> Se recomendó subir archivos y carpetas específicas en lugar de un repositorio completo en una sola carpeta, para evitar saturación e inconsistencias.</li></ol><h3 id="29ceed79-dd9f-807b-9890-da1441f27b47" class="">Paso 5: Acceso al Sitio Web</h3><ol type="1" id="29ceed79-dd9f-8074-8b6d-e1ae6fe98541" class="numbered-list" start="1"><li><strong>Obtener la URL:</strong> Volver a la sección &quot;Static website hosting&quot; en la pestaña &quot;Propiedades&quot;.</li></ol><ol type="1" id="29ceed79-dd9f-802e-be7c-f53f38304c76" class="numbered-list" start="2"><li><strong>Acceder al Enlace:</strong> El punto de enlace (endpoint) del sitio web estará visible. Esta URL, que contiene <code>amazonaws.com</code>, es la dirección pública del nuevo sitio.</li></ol><h2 id="29ceed79-dd9f-80b6-ae7d-e46f2bc5f4be" class="">Casos de Uso y Conclusión</h2><p id="29ceed79-dd9f-8010-9df7-e1d3e560a0bb" class="">Para ilustrar la relevancia de S3 en el mundo real, se mencionaron empresas reconocidas como <strong>Honda</strong> y compañías de videojuegos. Se citó una frase destacando sus beneficios: &quot;[Tienen] esa presencia global y la habilidad de permitir que sus juegos sean accesibles para el público con [baja] latencia alrededor del mundo&quot;.</p><p id="29ceed79-dd9f-80dd-80f6-cb62422a1308" class="">La conclusión: AWS S3 es una herramienta poderosa y accesible para desplegar sitios web estáticos de forma rápida y eficiente.</p><h2 id="29ceed79-dd9f-8075-a276-c86c1d2d6753" class="">Contexto Comunitario y Cierre del Evento</h2><p id="29ceed79-dd9f-80a4-8747-eefbd17bc217" class="">El evento no solo fue una sesión técnica, sino también un espacio para fortalecer la comunidad de AWS en Santa Cruz.</p><ul id="29ceed79-dd9f-80d1-ba27-f36512263071" class="bulleted-list"><li style="list-style-type:disc"><strong>Iniciativa Estudiantil:</strong> La charla sirvió de plataforma para promover la creación del primer Cloud Club para estudiantes en la región.</li></ul><ul id="29ceed79-dd9f-80ca-b176-d00a4a991a47" class="bulleted-list"><li style="list-style-type:disc"><strong>Networking:</strong> Al final de la sesión, se abrió un espacio de socialización para que los asistentes pudieran interactuar entre ellos y con las ponentes.</li></ul><ul id="29ceed79-dd9f-8067-af21-f8317a4bc525" class="bulleted-list"><li style="list-style-type:disc"><strong>Patrocinio de AWS:</strong> Se agradeció a AWS como principal patrocinador del User Group, cuyo presupuesto permite la organización de estos meetups, incluyendo comida para los asistentes.</li></ul><ul id="29ceed79-dd9f-8028-803c-d6fe51a69dec" class="bulleted-list"><li style="list-style-type:disc"><strong>Trivia Comunitaria:</strong> Se realizaron preguntas sobre la historia de la comunidad de AWS en Bolivia, revelando que:<ul id="29ceed79-dd9f-8024-bb20-faef1b941fdc" class="bulleted-list"><li style="list-style-type:circle">El primer User Group de Bolivia fue en <strong>La Paz</strong>.</li></ul><ul id="29ceed79-dd9f-8038-a7fa-d6c367f11331" class="bulleted-list"><li style="list-style-type:circle">El próximo AWS Community Day se celebrará en <strong>Santa Cruz</strong>.</li></ul></li></ul><ul id="29ceed79-dd9f-8062-8e32-d356ff16c59c" class="bulleted-list"><li style="list-style-type:disc"><strong>Llamado a la Acción:</strong> Se invitó a los asistentes a unirse al grupo de WhatsApp de la comunidad para mantenerse informados sobre futuros eventos y noticias.</li></ul></div></details><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">📰 briefing doc</summary><div class="indented"><p id="29ceed79-dd9f-80dc-b393-c702877477c5" class="">Este documento resume la presentación &quot;Cómo crear tu propia web con S3 en AWS&quot;, impartida por las estudiantes universitarias Dariana Pamayo y Nicole Ada León en un evento del AWS User Group de Santa Cruz. La charla ofreció una guía práctica y accesible para alojar sitios web estáticos con Amazon S3, un servicio de almacenamiento de objetos de Amazon Web Services.</p><p id="29ceed79-dd9f-80d6-8b25-f0c2023202dc" class="">Las presentadoras, líderes emergentes en la comunidad tecnológica local y promotoras del primer Cloud Club para estudiantes en Santa Cruz, estructuraron la sesión en tres partes: introducción a conceptos fundamentales, demostración práctica paso a paso y casos de uso. El contenido abarcó desde el flujo básico de una petición web hasta la configuración técnica de un bucket de S3, incluyendo políticas de permisos y habilitación del alojamiento web. La presentación destacó la simplicidad y potencia de S3 para proyectos como páginas de perfil profesional (landing pages) y blogs—contenido que no requiere interacción con bases de datos ni actualizaciones constantes. El evento también sirvió como plataforma para el aprendizaje y networking dentro de la comunidad local de AWS.</p><h2 id="29ceed79-dd9f-8024-8912-e5c11c6febd6" class="">Introducción y Presentadoras</h2><p id="29ceed79-dd9f-805b-8eba-e5eb532d8d76" class="">La charla fue dirigida por dos estudiantes de la Universidad Católica, futuras líderes en la comunidad tecnológica de Santa Cruz.</p><ul id="29ceed79-dd9f-8066-80a3-dac2a643bc56" class="bulleted-list"><li style="list-style-type:disc"><strong>Dariana Pamayo:</strong> Estudiante de segundo año de Ingeniería de Software. Su interés por las tecnologías en la nube surgió a partir de un curso y un viaje académico. Es postulante a presidenta del primer Cloud Club de la universidad, una iniciativa para estudiantes que promueve el conocimiento de AWS a través de eventos y colaboración mutua, con aprobación formal esperada en noviembre.</li></ul><ul id="29ceed79-dd9f-80d4-9c7f-f9e728f603de" class="bulleted-list"><li style="list-style-type:disc"><strong>Nicole Ada León:</strong> Estudiante de Ingeniería de Inteligencia Artificial. Se describió como el &quot;apoyo moral&quot; de Dariana, enfatizando que un líder siempre necesita una comunidad que lo respalde. Su objetivo en la charla fue fomentar un ambiente de aprendizaje mutuo, donde estudiantes y profesionales puedan compartir conocimientos, sin importar cuán básicos parezcan.</li></ul><h2 id="29ceed79-dd9f-80ae-a8ad-d8d027999130" class="">Análisis del Contenido</h2><p id="29ceed79-dd9f-80a2-a7f4-e5d13a2d6c78" class="">La sesión proporcionó los conocimientos teóricos y prácticos necesarios para desplegar un sitio web estático en AWS.</p><h3 id="29ceed79-dd9f-803b-81fe-da38816aed18" class="">Fundamentos de las Páginas Web y AWS</h3><p id="29ceed79-dd9f-8021-879c-dfd808e666bd" class="">Para establecer una base común, las presentadoras explicaron el flujo de una petición web mediante un diagrama con cinco componentes principales:</p><ol type="1" id="29ceed79-dd9f-80ff-aa8d-e285c08a8e89" class="numbered-list" start="1"><li><strong>Usuario:</strong> Realiza una búsqueda desde un dispositivo (computadora, celular, etc.).</li></ol><ol type="1" id="29ceed79-dd9f-8058-99f5-d686d7719b39" class="numbered-list" start="2"><li><strong>Navegador:</strong> Actúa como intermediario, tomando la petición del usuario.</li></ol><ol type="1" id="29ceed79-dd9f-800d-b8cc-ebc00f516e02" class="numbered-list" start="3"><li><strong>Internet:</strong> La &quot;carretera&quot; que transporta la petición a su destino.</li></ol><ol type="1" id="29ceed79-dd9f-80c9-b62f-d85af8920175" class="numbered-list" start="4"><li><strong>AWS (Amazon Web Services):</strong> El destino de la petición. Se describe como un servicio de Amazon que &quot;alquila o renta espacios de memoria de sus máquinas que son supergigantes&quot;. En este caso, el servicio específico es S3.</li></ol><ol type="1" id="29ceed79-dd9f-803a-b483-ef8e3986d170" class="numbered-list" start="5"><li><strong>S3:</strong> Recibe la petición, la procesa y devuelve la respuesta, que viaja de regreso al usuario por el mismo camino (Internet y Navegador).</li></ol><h3 id="29ceed79-dd9f-80f9-8bb0-f6c518eff204" class="">Conceptos Clave</h3><p id="29ceed79-dd9f-807d-9744-f69ab287f0a1" class="">Se definieron varios términos esenciales para comprender la solución propuesta.</p><table id="29ceed79-dd9f-80f4-b3d0-e4c109c357c0" class="simple-table"><tbody><tr id="29ceed79-dd9f-8080-97e4-ff290b94cc77"><td id="u}=]" class="">Concepto</td><td id="UkCo" class="">Descripción</td></tr><tr id="29ceed79-dd9f-8037-8950-f6c860b26ddc"><td id="u}=]" class=""><strong>Sitio Web Estático</strong></td><td id="UkCo" class="">Un sitio web que no requiere actualizaciones constantes y no interactúa con bases de datos. Los usuarios solo pueden ver el contenido, similar a un blog. S3 está diseñado para este tipo de sitios.</td></tr><tr id="29ceed79-dd9f-80aa-b339-f07fc64c51ea"><td id="u}=]" class=""><strong>Sitio Web Dinámico</strong></td><td id="UkCo" class="">Un sitio que se conecta con bases de datos y necesita edición y mantenimiento constantes para interactuar con los datos de los usuarios.</td></tr><tr id="29ceed79-dd9f-808e-bd76-c389b0e89259"><td id="u}=]" class=""><strong>Almacenamiento por Objetos (S3)</strong></td><td id="UkCo" class="">A diferencia del almacenamiento por bloques o archivos, cada dato se guarda como un &quot;objeto&quot; con un nombre único. Se asemeja a una &quot;caja donde puedes almacenar diferentes tipos de datos&quot;, desde archivos<code>index.html</code>hasta bases de datos completas.</td></tr><tr id="29ceed79-dd9f-803f-bdb1-f13c84e0bfca"><td id="u}=]" class=""><strong>Bucket de S3</strong></td><td id="UkCo" class="">El contenedor principal en S3 para almacenar archivos (objetos). Se utilizó la analogía de una &quot;caja de mudanza&quot; donde:&lt;ul&gt;&lt;li&gt;El<strong>bucket</strong>es la caja.&lt;/li&gt;&lt;li&gt;Los<strong>archivos</strong>son los objetos dentro de la caja.&lt;/li&gt;&lt;li&gt;El<strong>nombre del bucket</strong>es la etiqueta única de la caja, que debe estar en minúsculas y ser único globalmente.&lt;/li&gt;&lt;li&gt;La<strong>región de AWS</strong>es la ubicación física del servidor donde se almacena la caja (p. ej., Virginia o São Paulo).&lt;/li&gt;&lt;/ul&gt;</td></tr></tbody></table><h2 id="29ceed79-dd9f-806c-9dd6-cc071b8c0cf6" class="">Guía Práctica: Creación de un Sitio Web con S3</h2><p id="29ceed79-dd9f-803b-84bf-fe5d672f9b7e" class="">La presentación incluyó una demostración en video del proceso técnico para configurar un sitio web estático. Se mencionó que los nuevos usuarios de AWS disponen de una capa gratuita (5 GB) que es &quot;más que suficiente para esta prueba&quot;.</p><h3 id="29ceed79-dd9f-802e-b39c-e59f15c7985d" class="">Paso 1: Creación del Bucket</h3><ol type="1" id="29ceed79-dd9f-8069-a289-d6938b6ed14f" class="numbered-list" start="1"><li><strong>Acceder a la Consola de AWS:</strong> Buscar el servicio S3.</li></ol><ol type="1" id="29ceed79-dd9f-8042-b534-de408dff3c85" class="numbered-list" start="2"><li><strong>Iniciar la Creación:</strong> Hacer clic en &quot;Create bucket&quot;.</li></ol><ol type="1" id="29ceed79-dd9f-8080-bec6-fdbe8912349a" class="numbered-list" start="3"><li><strong>Configurar el Bucket:</strong><ul id="29ceed79-dd9f-8031-b428-d1a950539b2a" class="bulleted-list"><li style="list-style-type:disc"><strong>Nombre del Bucket:</strong> Asignar un nombre único global en minúsculas.</li></ul><ul id="29ceed79-dd9f-80fc-9bde-fab8848b5a83" class="bulleted-list"><li style="list-style-type:disc"><strong>Región de AWS:</strong> Seleccionar la ubicación del servidor. São Paulo (SP) es la más cercana y ofrece menor latencia.</li></ul><ul id="29ceed79-dd9f-8050-afaf-f38400ab5553" class="bulleted-list"><li style="list-style-type:disc"><strong>Acceso Público:</strong> Desbloquear el acceso público para que el sitio sea visible en internet.</li></ul><ul id="29ceed79-dd9f-80ed-9b54-c195698305da" class="bulleted-list"><li style="list-style-type:disc"><strong>Configuraciones Adicionales:</strong> Dejar las opciones de versionamiento, etiquetas (tags) y encriptación con sus valores por defecto.</li></ul></li></ol><ol type="1" id="29ceed79-dd9f-80eb-a12b-e1c1ac148694" class="numbered-list" start="4"><li><strong>Finalizar:</strong> Confirmar la creación del bucket.</li></ol><h3 id="29ceed79-dd9f-8047-a2fa-edd0edb49df0" class="">Paso 2: Habilitación del Alojamiento de Sitio Web Estático</h3><ol type="1" id="29ceed79-dd9f-803b-a62a-f7b2a128ca20" class="numbered-list" start="1"><li><strong>Acceder al Bucket:</strong> Seleccionar el bucket recién creado.</li></ol><ol type="1" id="29ceed79-dd9f-80f5-8a59-cbf0394d6228" class="numbered-list" start="2"><li><strong>Ir a Propiedades:</strong> Navegar a la pestaña &quot;Propiedades&quot;.</li></ol><ol type="1" id="29ceed79-dd9f-80aa-95cc-d6015aaa2f80" class="numbered-list" start="3"><li><strong>Editar Alojamiento:</strong> Buscar la sección &quot;Static website hosting&quot; al final de la página y hacer clic en &quot;Editar&quot;.</li></ol><ol type="1" id="29ceed79-dd9f-800d-bdcc-e5cb091cee8e" class="numbered-list" start="4"><li><strong>Habilitar:</strong> Activar la opción de alojamiento de sitio web estático.</li></ol><ol type="1" id="29ceed79-dd9f-8071-a64e-c11b922566db" class="numbered-list" start="5"><li><strong>Definir Documentos:</strong><ul id="29ceed79-dd9f-800b-9a15-ce3dfe9d6aca" class="bulleted-list"><li style="list-style-type:disc"><strong>Documento de índice:</strong> Especificar el archivo principal de la web (p. ej., <code>index.html</code>).</li></ul><ul id="29ceed79-dd9f-8033-8119-cc2d6fbc158c" class="bulleted-list"><li style="list-style-type:disc"><strong>Documento de error (opcional):</strong> Especificar una página para mostrar en caso de error (p. ej., <code>error.html</code>).</li></ul></li></ol><h3 id="29ceed79-dd9f-8049-9f7b-eaff14f04018" class="">Paso 3: Configuración de Permisos (Política del Bucket)</h3><ol type="1" id="29ceed79-dd9f-8052-945c-fe2b3c12eca1" class="numbered-list" start="1"><li><strong>Ir a Permisos:</strong> Navegar a la pestaña &quot;Permisos&quot; del bucket.</li></ol><ol type="1" id="29ceed79-dd9f-8024-8d2f-e7383bc6836c" class="numbered-list" start="2"><li><strong>Editar Política:</strong> Hacer clic en &quot;Edit&quot; en la sección &quot;Bucket policy&quot;.</li></ol><ol type="1" id="29ceed79-dd9f-80df-b39b-f41651a82004" class="numbered-list" start="3"><li><strong>Aplicar Política JSON:</strong> Pegar una política en formato JSON para otorgar permisos de lectura pública. La regla principal permite a todos los usuarios (<code>&quot;Principal&quot;: &quot;*&quot;</code>) realizar la acción de obtener objetos (<code>&quot;Action&quot;: &quot;s3:GetObject&quot;</code>), lo que significa que &quot;todos pueden solo leerlo, no pueden tocarlo, no pueden cambiar nada&quot;.</li></ol><h3 id="29ceed79-dd9f-80dd-b544-e0c15a838c4d" class="">Paso 4: Carga de Archivos</h3><ol type="1" id="29ceed79-dd9f-80b4-b0d7-fd9b7b47c924" class="numbered-list" start="1"><li><strong>Subir Contenido:</strong> Dentro del bucket, usar la opción para cargar los archivos del sitio web (<code>index.html</code>, CSS, imágenes, etc.).</li></ol><ol type="1" id="29ceed79-dd9f-80cc-b43e-d0b0fc6df3cd" class="numbered-list" start="2"><li><strong>Buena Práctica:</strong> Se recomendó subir archivos y carpetas específicas en lugar de un repositorio completo en una sola carpeta, para evitar saturación e inconsistencias.</li></ol><h3 id="29ceed79-dd9f-8034-98b2-f08a5bc7a2cf" class="">Paso 5: Acceso al Sitio Web</h3><ol type="1" id="29ceed79-dd9f-80d3-afef-d60579f88b53" class="numbered-list" start="1"><li><strong>Obtener la URL:</strong> Volver a la sección &quot;Static website hosting&quot; en la pestaña &quot;Propiedades&quot;.</li></ol><ol type="1" id="29ceed79-dd9f-80fd-996a-e2ca4b1ce0b4" class="numbered-list" start="2"><li><strong>Acceder al Enlace:</strong> El punto de enlace (endpoint) del sitio web estará visible. Esta URL, que contiene <code>amazonaws.com</code>, es la dirección pública del nuevo sitio.</li></ol><h2 id="29ceed79-dd9f-80fd-aba9-c395d553935c" class="">Casos de Uso y Conclusión</h2><p id="29ceed79-dd9f-8041-9c85-e5b1491f764e" class="">Para ilustrar la relevancia de S3 en el mundo real, se mencionaron empresas reconocidas como <strong>Honda</strong> y compañías de videojuegos. Se citó una frase destacando sus beneficios: &quot;[Tienen] esa presencia global y la habilidad de permitir que sus juegos sean accesibles para el público con [baja] latencia alrededor del mundo&quot;.</p><p id="29ceed79-dd9f-80ce-81d9-ec7ea8476a66" class="">La conclusión: AWS S3 es una herramienta poderosa y accesible para desplegar sitios web estáticos de forma rápida y eficiente.</p><h2 id="29ceed79-dd9f-8025-8b3e-dc99d39c8bb7" class="">Contexto Comunitario y Cierre del Evento</h2><p id="29ceed79-dd9f-8024-8cab-c6ce82b7982a" class="">El evento no solo fue una sesión técnica, sino también un espacio para fortalecer la comunidad de AWS en Santa Cruz.</p><ul id="29ceed79-dd9f-8041-86bf-de8d2492d97a" class="bulleted-list"><li style="list-style-type:disc"><strong>Iniciativa Estudiantil:</strong> La charla sirvió de plataforma para promover la creación del primer Cloud Club para estudiantes en la región.</li></ul><ul id="29ceed79-dd9f-8079-b841-cf017f93d8a2" class="bulleted-list"><li style="list-style-type:disc"><strong>Networking:</strong> Al final de la sesión, se abrió un espacio de socialización para que los asistentes pudieran interactuar entre ellos y con las ponentes.</li></ul><ul id="29ceed79-dd9f-8003-9f82-f0bbd9c53406" class="bulleted-list"><li style="list-style-type:disc"><strong>Patrocinio de AWS:</strong> Se agradeció a AWS como principal patrocinador del User Group, cuyo presupuesto permite la organización de estos meetups, incluyendo comida para los asistentes.</li></ul><ul id="29ceed79-dd9f-8080-9f82-ec2ee1083648" class="bulleted-list"><li style="list-style-type:disc"><strong>Trivia Comunitaria:</strong> Se realizaron preguntas sobre la historia de la comunidad de AWS en Bolivia, revelando que:<ul id="29ceed79-dd9f-80c4-8832-f5ca668a30b5" class="bulleted-list"><li style="list-style-type:circle">El primer User Group de Bolivia fue en <strong>La Paz</strong>.</li></ul><ul id="29ceed79-dd9f-80c8-adc0-cf9e413c828c" class="bulleted-list"><li style="list-style-type:circle">El próximo AWS Community Day se celebrará en <strong>Santa Cruz</strong>.</li></ul></li></ul><ul id="29ceed79-dd9f-807b-86ad-e3d75834453c" class="bulleted-list"><li style="list-style-type:disc"><strong>Llamado a la Acción:</strong> Se invitó a los asistentes a unirse al grupo de WhatsApp de la comunidad para mantenerse informados sobre futuros eventos y noticias.</li></ul></div></details><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">🧠 mind map</summary><div class="indented"><figure id="29beed79-dd9f-80a1-81ec-ce580234a34e" class="image"><a href="Crea%20tu%20propia%20web%20con%20S3%20en%20AWS/NotebookLM_Mind_Map.png"><img style="width:6568px" src="Crea%20tu%20propia%20web%20con%20S3%20en%20AWS/NotebookLM_Mind_Map.png"/></a></figure></div></details><figure id="29ceed79-dd9f-8098-9d06-d84aa60b479a" class="image"><a href="Crea%20tu%20propia%20web%20con%20S3%20en%20AWS/IMG_5292.jpeg"><img style="width:600px" src="Crea%20tu%20propia%20web%20con%20S3%20en%20AWS/IMG_5292.jpeg"/></a></figure><figure id="29ceed79-dd9f-8000-a56d-dfe9c90b7c56" class="image"><a href="Crea%20tu%20propia%20web%20con%20S3%20en%20AWS/IMG_5294.jpeg"><img style="width:600px" src="Crea%20tu%20propia%20web%20con%20S3%20en%20AWS/IMG_5294.jpeg"/></a></figure><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">📝 voice memo/transcript</summary><div class="indented"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="29beed79-dd9f-80d4-8b79-fc6c9a251d38" class="code code-wrap"><code class="language-Plain Text" style="white-space:pre-wrap;word-break:break-all">de personas que están iniciando en su carrera profesional. Ellas son eh líderes en lo que es el uno de los primeros cloud clouds que vamos a tener aquí en Santa Cruz. Entonces, le cedo la palabra a
+Eh, buenas noches. ¿Me escucha?
+Okay. Buenas noches. Me presento, mi nombre es Dana Pamayo y acá está mi compañera Nicoada León. Bueno, hoy les vamos a dar una charla sobre cómo crear tu propia web con S3 en AWS. Eh, bueno, eh vamos a ver un poco los contenidos que vamos a tener hoy en todas. Entonces, esto es lo que vamos a ver. Primero, una introducción más que todo de los conceptos para que todo el mundo entienda. Luego ya la creación en sí de la página con S3, donde vamos a hacer una pequeña demo. Vamos a ver un paso a paso cómo se puede hacer la página y por último una conclusión de todo el anterior y bueno, primero queremos hacer una introducción para que nos conozcan un poquito mejor. Bueno, eh primero voy a hablar por mí. Eh, yo soy estudiante de la Universidad Católica, estoy en mi segundo año de la carrera de ingeniería de SO. Y bueno, ahí como pueden ver es una foto de un viaje que tuvimos el año pasado donde nos pudimos interesar un poquito sobre el mundo de lo que es la chilería en la nube y bueno, eh tuve la oportunidad de hacer un curso sobre eh la nube y ahí fue donde me interesé en todo lo que es este mundo de As. S. Y bueno, eh gracias a esa motivación me animé a participar para el la creación del primer Club Club acá en Santa Cruz y esperemos que nos denisto positivo en noviembre. Eso más que todo es para estudiantes, para que ellos igual conozcan este mundo de AWBS y entre nosotros nos ayudemos para aprender más y hacer eventos como este, pero entre estudiante para bueno, promover más el mundo de la AWS. Ahorita le paso la palabra a mi compañera Nicole.
+Bueno, buenas noches a todos. Mi nombre es Nicole y soy estudiante de la Universidad Católica igual que Dariana. Realmente soy con su apoyo moral porque ella es la postulante presidente del del club de la universidad, pero creo que dentro del aula puedes crear comunidades internas y no necesariamente tienes que dirigir todas. Sé que dentro del AWS User Group de Santa Cruz igual hay un líder, pero un líder no hace nada solito, siempre necesita acompañamiento, una comunidad que lo apoye y que lo anime a arriesgarse a hacer cosas como estas. Entonces, estudio de ingeniería inteligencia artificial en la Católica y ya el nombre dice que me animo a hacer cosas nuevas que realmente no comprendo del todo, pero que tengo la curiosidad de aprender. Y el objetivo de esta de esta charla es que ustedes también puedan animarse a dar a conocer lo poco que saben, así como nosotras y así nosotros podamos aprender más de ustedes, porque sé que aquí hay muchos profesionales y realmente nosotras e e el propósito de y ser parte de estas charlas es aprender de ustedes. Bueno, ahora vamos a ver un poquito de cómo es lo que funcionan las páginas web para empezar de lleno y cómo crearlas. Entonces, primero vamos a ver este diagrama que es un grupo de cómo funciona una página web. Eh, tenemos cinco componentes principales. Primero, el usuario, que puede ser cualquier persona que hace una búsqueda de su computadora, su celular, su tablet. Esa petición se pasa por el navegador, donde es un punto intermedio, agarra la petición y la manda al internet, que es como un como una carretera donde pasan todas las decisiones y puede llegar petición de una persona a otra persona al que está al otro lado del mundo y es superrápido. Y bueno, de la petición pasa por el navegador, por internet y luego a todo lo que es AWS, que para los que no sepan que no creo, pero AWS significa Amazon Web Service. Eh, es un servicio que ofrece Amazon que lo que hace es alquilar o rentar espacios de memoria de sus máquinas que son supergigantes y que tienen un montón de memoria y lo que hacen es darte un pedacito de su memoria a cambio de bueno, una sensualidad, por así decirlo. Y AWS tiene un montón de servicios. En este en esta oportunidad vamos a hablar de S3. Entonces, la petición pasa a AWS, específicamente pasa a S3 y S3 te da ya y otra la respuesta pas por el internet y llega al usuario. Entonces, recapitulando, el usuario hace su petición, pasa por el navegador, pasa por el internet, llega a AWS y de en la parte de AS llega específicamente en este caso, en S3 y de S3 pasa o traje el internet que llega al usuario. Y bueno, eso es un poquito de el flujo de una página web. Ahorita vamos a ver unos conceptos a aparte y luego ya vamos a empezar a ver la lo que es la página.
+Bueno, vamos a empezar definiendo qué es un una web estática y una web dinámica, porque hay personas aquí que también estamos eh con conceptos un tanto básicos y queremos tratar de definir. Una web estática como tal realmente no tiene demasiado mantenimiento o actualizaciones constantes a diferencia de una web dinámica que normalmente tiene relación con bases de datos y necesita un mantenimiento, una edición constante. En este caso, con S3 nosotros podemos usarlo para diferentes usos como hacer una landing page de nuestro perfil profesional, entre otros. Eh, como definición de S3 eh realmente está dentro del almacenamiento por objetos, aunque también existen otro tipo de almacenamientos como el almacenamiento por bloques, que era el comúnmente usado antes de obtener el almacenamiento por objetos, donde cada, en este caso, cada bloque contiene información de bases de datos, información muy grande que para una página o para diferentes usos se necesitan gran capacidad de almacenamiento y trata de ser un tanto rápido hasta que llegó el almacenamiento por objetos con S3. Y bueno, el almacenamiento por files es como lo que tenemos en la computadora de archivos como un XT, donde la definición específica es el nombre y la ubicación del archivo dentro de nuestro almacenamiento. En el caso del almacenamiento por objetos, nosotros tenemos un nombre único, se conoce como objeto o entonces en este caso es como una caja donde puedes almacenar diferentes tipos de datos como bases de datos desde ese tamaño grande hasta un index HTML. Le vamos a mostrar y vamos a pausar el video paso por paso para el tema de la demo para que podamos ver un tutorial rápido y específico de cómo podríamos levantar una página estática con S3.
+Hasta mientras alguna duda, alguna duda. Mientras tanto, mientras la arreglamos. A que parece que se o proceso que se realiza es de un método dinámico, digamos, siempre está en constante actualización para que el tipo el cambio con el usuario siempre interactuar con el tipo de cambio en este caso As.
+Sí, pero en este caso como estamos usando S3, S3 es específicamente para páginas estáticas. Esto quiere decir que las personas eh solo lo ven, o sea, no No pueden de que agregar dato, eliminar datos, editar nada, solo se ve.
+Solo se ve es como los blogs que antes había, ¿no? Que vos ponías ahí tus actualizaciones, vos lo podías editar, pero los demás solo podían leer y podías hacer de parte. Ya. Okay. Ahora vamos a ver a ver cómo podemos crear un bucket primero. Eh, bueno, Nicole lo explicó por encimita, pero un backet es un contenedor donde puedes guardar todos tus archivos, específicamente aquí en un ejemplo podía ser que un pocket es como una una caja de mudanza. En la caja de mudanza vos podés guardar todo lo que vos necesitá. Esos serían los archivos que vamos a poner en nuestra página web. La caja sería el packet y bueno, la etiqueta que le ponemos a la caja sería la etiqueta que va a ser el betet, que tiene que ser única para que no se mezcle con las demás cajas, ¿no? Y por último, la posición o donde vamos a poner la caja sería lo que sería la ubicación del servidor en As. Entonces, con esos términos ahora Vamos a ver un poquito de cómo crear un backet. Eh, antes que todo, aquí ya debería tener su cuenta creada en Ale. Es superfácil, le va a pedir unos datos, su nombre, Gmail y una vez ya con la cuenta ya pueden empezar a crearlo. Eh, igual cuando recién crean su cuenta tienen, si no me equivoco, 5 GB para de prueba. Sí. Entonces eso más que suficiente para esta prueba si la quieren realizar en sus casas o como Muchas restas ahí.
+Ajá. Por eso mismo no le hicimos en vivo la la demo, porque teníamos miedo que pase. Pero Primero lo que hacemos es acceder a la consola de AWS y en el usamos S3. Eh, existen varios tipos de S3, pero este para esta vez solo vamos a usar el S3 básico. Y en S3 lo que nos va a hacer va a serar una lista de opciones y aquí arriba a la derecha en una va a aparecer una opción que dice create, le damos clic y una vez darle clic nos aparece el esta parte de aquí y aquí es la configuración que le vamos a poner a nuestro antes de crearlo. Aquí es lo que les decía, lo de la ubicación ya que AWS tiene varias sucursales por decirlo tiene varios este puntos en todo el mundo. Entonces aquí podemos seleccionar este en qué servidor o en qué parte del mundo queremos que nuestros datos. En este caso está en Virginia, pero igual la que tenemos más cerca, si no me equivoco, es en SP, que bueno, por estar más cerca, eh se obtienen los datos más rápidos, un poquito más rápido, un poco más. Y bueno, aquí elegimos el tipo del backet que lo vamos a dejar en general y aquí ponemos el nombre del backet. Esto tiene que ser un nombre diferente en un único en comparación a otro nombre. Eh, tiene que hacer puras minúsculas y puede usar guiones pero juntos no. ¿Y cuál es su propósito? Bueno, que esté guardado en la en el servidor de AWS y se pueda diferenciar el Y por último, acá tenemos el acceso del backet que vamos a poner. En este caso está bloqueado, lo que nosotros vamos a hacer es hacerlo público para que cualquier persona pueda acceder a él. Entonces, le seleccionamos otra parte de acá. y le damos aquí para convertirla en públic. Ahí está yendo todo. Luego acá abajo tenemos las versiones del backet. Vamos a dejar tal tag. Las tags son como la etiqueta. Eso es por para poder en caso que tengamos varios packets para poder guardarlos distintos grupos, por así decirlo, para que no noso el encriptado es para cuando personas quieran acceder a nuestro paquet la información a les aparezca inictada, entonces no puedan ver o no puedan ver nuestra información de costa, entonces lo de luego hay este configuraciones avanzadas, pero lo vamos a dejar tal cu y luego aquí a la derecha está el botón y creamos el panel. Ahí está. Bueno, ahí mostramos todo lo que hace y ahí le damos a crear Bueno, ahí nos aparece un mensaje para ver que se ha creado correctamente y aquí ya nos aparece, ¿no? Entonces, lo que hacemos ahora, ahora ya lo tenemos creado, pero eh es como otra vez el ejemplo de la caja. Es una caja, pero no sabe qué va a contener. Entonces, tenemos que ponerle qué tipo de archivos va a ocupar y tenemos que cargarle los archivos porque si no sirve una caja vacía y para que no sirve. Entonces, nos vamos a propiedades. Y ahorita lo que vamos a hacer va a ser habilitar el back. Entonces nos vamos a propiedades, nos damos y nos vamos a la opción de más, vamos más aquí setting web hosting, que lo que vamos a hacer es convertir nuestra página web, la vamos a hacer y nos vamos al botón de editor. Una vez aquí nos pregunta que si queremos hacer nuestra página estática y le decimos que sí. Luego acá está el tipo de I que vamos a querer. En este caso, ¿no? crear una website y aquí está nuestro documento que vamos a cargar, que importante que tengan index, que sería como nuestro main de la página web, va a ser lo que se va, bueno, lo que va a llamar a nuestros demás archivos. Y luego tenemos la parte de error, que es opcional, pero es una buena pregunta ponerla que básicamente va a ser lo que se va a ver una vez que eh por si el usuario entra a una parte que no debería entrar, le va a mandar un mensaje de error. Y bueno, ahí ya este habilitamos nuestro back. Ahora por último vamos a hacer nuestra configuración de Pet. Seguimos. Volvemos atrás entramos a nuestro backg. Estamos ahí. Le damos a permisos porque ahora ya está creado, pero quiénes pueden entrar y y los que entran tienen que tener ciertas reglas, ¿no? No pueden entrar y hacer lo que quieran. Entonces vamos a edit policy y aquí nos va a cargar este todas estas a ser la regla que nosotros vamos a imponer al usuario. Entonces, aquí usando el JSON, bueno, JJSON, vamos a poner la regla para que los usuarios puedan eh ver nuestra página, ¿no? Y aquí entr cargá. Entonces, bueno, ahí cargamos nuestras reglas. Aquí tenemos la versión As, que va a usar. Y acá tenemos las reglas. Por ejemplo, aquí dice que va a ser público, que va a permitir a todos que puedan que sea en una página web de S3 y que todos puedan solo leerl, no pueden tocarla, no pueden cambiar nada y ahí ya guardamos y ya se guarda nuestra red. Y bueno, con eso ya está habilitada para que nosotros podemos cargar lo que nosotros quejamos y ya el usuario lo pueda ver. Y ahora esa parte la va a dar mi compañero.
+Bueno, final Cuando ya tenemos nuestro Wet creado, lo que falta es cargarle archivos. En este caso, yo presioné anteriormente la parte de añadir un file, que es directamente el index para no tardar tanto con la carga de archivos, pero también se pueden añadir eh realmente cuando subimos estos archivos, una buena práctica es tratar de subir eh carpetas no tan pesadas o directamente si nosotros queremos subir un un repositorio de modificado, no subir todo el proyecto en una carpeta conjunta porque se puede saturar y pueden haber inconsistencias, sino tratar de subir files y carpetas específicas. Una vez que ya subimos y ya le dimos eh eh a la carga de archivos, nos va a salir que la actualización ha sucedido y lo único que falta es obtener la URL de nuestra nueva página. Entonces para eso nos vamos a cerrar cualquier tipo de ventana abierta que tengamos y vamos a permisos a la parte management, a la parte final, bueno, permisos de verdad, propiedades, eh, a la parte final donde está la parte del hosting. Exacto. Y directamente accedemos al URL. En este caso, nosotras no hicimos un CB ni una page porque dijimos realmente es el hombre de este evento. Espectorpes, así que hicimos una paginita eh creativa. Oh,
+y si ven en la URL, que era algo que mencionaron antes, el la URL tiene el amazonw.com y realmente esto demuestra que estamos utilizando el S3, aunque para algunas personas puede ser no tan eh lindo de ver, pero en este caso una página en este caso de Adoles. Muchas gracias. Nos emocionamos.
+No le voy a compartir. Ahí está.
+Bueno, de momento entonces y al tratar de ver todo los casos de uso que realmente le dan empresas a S3, nos upamos como empresas de videojuegos como el nombre o Honda, Honda que es super conocido aquí en Santa Cruz, que también realmente utiliza AWS para su página y una frase que dice es que realmente tienen esa presencia global y la habilidad de permitir que sus juegos sean accesibles para el público con atencia alrededor del mundo y como siguiente les dejamos nuestras redes sociales. Ahora sí, muchas gracias.
+Muchísimas gracias, Dani y Nicole. Eh, antes de que se nos sienten, ¿alguien tiene alguna pregunta?
+Bueno, parece que estuvo clarísima la charla. Eh, no, muchísimas gracias. La verdad que es muy inspirador verlas a ustedes en esta etapa tan, o sea, tan chiquitas, digamos, pero ya están haciendo este tipo de proyecto, dando charlas aquí a nuestra comunidad y yo creo que eso abre la invitación a todos, ¿no? O sea, cualquiera puede vir, venir y dar una charla, ¿no? Eh, eso, muchísimas gracias y yo creo que cerramos con las últimas preguntas. Y partimos con los $5. Ah, ¿alguien sabe quién es el padrino de nuestro user group?
+Ahora la pregunta un poco más difícil. ¿Cuál fue el primer?
+Ah, okay.
+No, ¿cuál fue el cuándo fue?
+Okay. A nivel Bolivia, ¿alguien sabe decirme dónde ha sido el primer user?
+La Paz.
+Amba,
+no, La Paz. La Paz, pero ya muy muy muy sobrado. Y la la mano, porfa.
+Claro. Pregunta del
+con 10 fechas y
+con el año suficiente. Y primero.
+¿En qué año hicimos el primer community de va
+2023 cre 2024?
+No, no, rayos.
+Desde cuatro y Y este año fue Cochabamba, por si no saben.
+Y el próximo año nos toca a nosotros.
+Nos tocará a nosotros, pero no le digan a nadie.
+Okay. Bueno, muchísimas gracias a todos. Eh, todavía no se me retiren. Acabo de pedir comida, ¿no? Para todos. Eh, eso es parte lo que es el presupuesto que nosotros manejamos para los Meetups. Ah,
+gracias a gracias a W.
+Sí, justamente a nuestro más grande sponsor que es AWC. nos manda un presupuesto y nosotros lo manejamos para estos mismos. ¿Okay? Entonces, a partir de este momento ya es socialización, es lo que llamamos networking para que ustedes puedan conocerse con las distintas personas que tenemos en la comunidad, hacer preguntas a los speakers y pues nos vemos en la próxima. Eh, todos este tenemos nuestras redes sociales, todos están en el en el grupo de WhatsApp,
+¿no?
+Si quieren ahí escaneenlo ahí,
+¿eh? Y nos va a llevar a al al grupo de WhatsApp donde movemos muchos eventos, noticias,
+funcionar no me lo detect Y bueno, salud también, ¿no?</code></pre></div></details></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>

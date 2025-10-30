@@ -1,0 +1,783 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Understanding AWS VPC: A First Dive into Cloud Networking </title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.collection-content td {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.callout img.notion-static-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.callout p {
+	margin: 0;
+}
+
+.callout h1,
+.callout h2,
+.callout h3 {
+	margin: 0 0 0.6rem;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+blockquote.quote-large {
+	font-size: 1.25em;
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.highlight-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.highlight-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.highlight-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.highlight-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.highlight-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.highlight-default_background {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray_background {
+	background: rgba(42, 28, 0, 0.07);
+}
+.highlight-brown_background {
+	background: rgba(139, 46, 0, 0.086);
+}
+.highlight-orange_background {
+	background: rgba(224, 101, 1, 0.129);
+}
+.highlight-yellow_background {
+	background: rgba(211, 168, 0, 0.137);
+}
+.highlight-teal_background {
+	background: rgba(0, 100, 45, 0.09);
+}
+.highlight-blue_background {
+	background: rgba(0, 124, 215, 0.094);
+}
+.highlight-purple_background {
+	background: rgba(102, 0, 178, 0.078);
+}
+.highlight-pink_background {
+	background: rgba(197, 0, 93, 0.086);
+}
+.highlight-red_background {
+	background: rgba(223, 22, 0, 0.094);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.block-color-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.block-color-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.block-color-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.block-color-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.block-color-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(240, 239, 237, 1);
+}
+.block-color-brown_background {
+	background: rgba(245, 237, 233, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 235, 222, 1);
+}
+.block-color-yellow_background {
+	background: rgba(249, 243, 220, 1);
+}
+.block-color-teal_background {
+	background: rgba(232, 241, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(229, 242, 252, 1);
+}
+.block-color-purple_background {
+	background: rgba(243, 235, 249, 1);
+}
+.block-color-pink_background {
+	background: rgba(250, 233, 241, 1);
+}
+.block-color-red_background {
+	background: rgba(252, 233, 231, 1);
+}
+.select-value-color-default { background-color: rgba(42, 28, 0, 0.07); }
+.select-value-color-gray { background-color: rgba(28, 19, 1, 0.11); }
+.select-value-color-brown { background-color: rgba(127, 51, 0, 0.156); }
+.select-value-color-orange { background-color: rgba(196, 88, 0, 0.203); }
+.select-value-color-yellow { background-color: rgba(209, 156, 0, 0.282); }
+.select-value-color-green { background-color: rgba(0, 96, 38, 0.156); }
+.select-value-color-blue { background-color: rgba(0, 118, 217, 0.203); }
+.select-value-color-purple { background-color: rgba(92, 0, 163, 0.141); }
+.select-value-color-pink { background-color: rgba(183, 0, 78, 0.152); }
+.select-value-color-red { background-color: rgba(206, 24, 0, 0.164); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="29beed79-dd9f-807c-b4c3-d4c11375c401" class="page sans"><header><img class="page-cover-image" src="https://www.notion.so/images/page-cover/solid_blue.png" style="object-position:center 40%"/><div class="page-header-icon page-header-icon-with-cover"><span class="icon">🗣️</span></div><h1 class="page-title">Understanding AWS VPC: A First Dive into Cloud Networking </h1><p class="page-description"></p></header><div class="page-body"><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">🎙️voice memo</summary><div class="indented"><figure id="29ceed79-dd9f-80ca-a58a-e2e7e404ba4f"><div class="source"><a href="Understanding%20AWS%20VPC%20A%20First%20Dive%20into%20Cloud%20Netw/2025-10-29_Carlos_Isaac_Jaldin_Benavides.m4a">attachment:a60a89b2-038f-4c88-85f5-fefa68061fb7:2025-10-29_Carlos_Isaac_Jaldin_Benavides.m4a</a></div></figure></div></details><figure class="block-color-purple_background callout" style="white-space:pre-wrap;display:flex" id="29ceed79-dd9f-8090-84c7-ed287a7799f8"><div style="font-size:1.5em"><img class="icon notion-static-icon" src="https://www.notion.so/icons/video-camera_purple.svg"/></div><div style="width:100%"><figure id="29ceed79-dd9f-8013-b5bc-fe8bb9978c3f"><div class="source"><a href="Understanding%20AWS%20VPC%20A%20First%20Dive%20into%20Cloud%20Netw/VPCs__Fortaleza_en_la_Nube.mp4">attachment:65f753ec-bdaa-4659-90a5-f93e047c8f9f:VPCs__Fortaleza_en_la_Nube.mp4</a></div></figure></div></figure><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">📰 briefing doc simplified</summary><div class="indented"><p id="29ceed79-dd9f-8074-aadb-c5c927bd6619" class="">Este documento resume los conceptos básicos de redes en Amazon Web Services (AWS), basado en la presentación de Carlos Isaac Jaldin Benavides. El concepto más importante es la <strong>Virtual Private Cloud (VPC)</strong>, que es como tu propia red privada dentro de AWS—piénsalo como un edificio con seguridad privada. Dentro de esta VPC, las direcciones IP se organizan usando <strong>CIDR</strong>, que es simplemente una forma de definir cuántas direcciones IP puedes usar.</p><p id="29ceed79-dd9f-80df-8df7-d763aebac78a" class="">Hay dos tipos de subredes: <strong>públicas y privadas</strong>. Las subredes públicas se conectan a internet a través de un <strong>Internet Gateway (IGW)</strong> y contienen recursos que la gente puede ver desde internet, como sitios web. Las subredes privadas son para recursos sensibles como bases de datos y servidores internos, y no tienen acceso directo a internet. Para que los recursos privados puedan conectarse a internet (por ejemplo, para descargar actualizaciones) sin que internet pueda entrar a ellos, se usa un <strong>NAT Gateway (NGW)</strong>. Por último, los <strong>VPC Endpoints</strong> permiten que tus recursos privados se conecten de forma segura a otros servicios de AWS sin pasar por internet.</p><h2 id="29ceed79-dd9f-8032-92b0-e0309147f234" class="">I. Introducción y Contexto</h2><ul id="29ceed79-dd9f-804c-abca-f4f9b924571a" class="bulleted-list"><li style="list-style-type:disc"><strong>Presentador:</strong> Carlos Isaac Jaldin Benavides, Ingeniero de Sistemas con más de seis años de experiencia trabajando para empresas de Estados Unidos, actualmente en el área de salud.</li></ul><ul id="29ceed79-dd9f-80d6-9efc-f05588f5843b" class="bulleted-list"><li style="list-style-type:disc"><strong>Por qué esta charla:</strong> Hacer que la educación técnica sea accesible en español, ya que mucha información solo está disponible en inglés.</li></ul><h2 id="29ceed79-dd9f-8047-906a-c11328103a5c" class="">II. Lo Básico: Virtual Private Cloud (VPC)</h2><h3 id="29ceed79-dd9f-805d-8a51-db533efbbcf3" class="">¿Qué es una VPC?</h3><p id="29ceed79-dd9f-802f-b9b2-ea0f2386a805" class="">Una VPC es tu propia red privada dentro de AWS. Es como un espacio aislado donde puedes crear y conectar tus recursos de AWS de forma segura.</p><ul id="29ceed79-dd9f-8077-a6eb-e65c671a715b" class="bulleted-list"><li style="list-style-type:disc"><strong>Ubicación:</strong> Una VPC pertenece a una región específica de AWS.</li></ul><ul id="29ceed79-dd9f-80f1-961a-d055df66bfd9" class="bulleted-list"><li style="list-style-type:disc"><strong>Disponibilidad:</strong> Aunque está en una región, puede extenderse por varias Zonas de Disponibilidad, lo que te permite crear sistemas más confiables.</li></ul><h3 id="29ceed79-dd9f-8043-9fea-d48500ab8dd0" class="">¿Por qué necesitamos una VPC? La analogía del edificio</h3><p id="29ceed79-dd9f-8005-af4e-f740609082de" class="">Imagina una VPC como un edificio con seguridad privada.</p><ul id="29ceed79-dd9f-80ca-988e-cae452279e49" class="bulleted-list"><li style="list-style-type:disc"><strong>El Edificio:</strong> La VPC es el edificio cerrado que te protege.</li></ul><ul id="29ceed79-dd9f-8044-9135-d279ea190cbc" class="bulleted-list"><li style="list-style-type:disc"><strong>Los Departamentos:</strong> Las subredes y recursos (servidores, bases de datos) son los departamentos dentro del edificio.</li></ul><ul id="29ceed79-dd9f-80e5-b5b9-de508e689255" class="bulleted-list"><li style="list-style-type:disc"><strong>Sin VPC:</strong> Sería como un edificio sin seguridad donde cualquiera podría entrar a tu departamento. En términos técnicos, tus recursos estarían expuestos a personas no autorizadas.</li></ul><ul id="29ceed79-dd9f-8032-bf98-c7f85b74d62d" class="bulleted-list"><li style="list-style-type:disc"><strong>Beneficio Principal:</strong> La VPC te da privacidad y seguridad, protegiendo tus recursos importantes.</li></ul><h2 id="29ceed79-dd9f-8091-87a3-dbafd7d09aac" class="">III. Direcciones IP: CIDR</h2><h3 id="29ceed79-dd9f-80dc-9d34-d84090088473" class="">¿Qué es CIDR?</h3><p id="29ceed79-dd9f-8094-a9a6-f53f8c254c01" class="">CIDR es una forma moderna de asignar direcciones IP. Reemplazó el sistema antiguo de clases que era menos flexible.</p><ul id="29ceed79-dd9f-8092-9124-dde5ae7db629" class="bulleted-list"><li style="list-style-type:disc"><strong>Cómo funciona:</strong> Un bloque CIDR tiene una dirección IP y un número después de una barra (ejemplo: <code>10.0.0.0/16</code>).</li></ul><ul id="29ceed79-dd9f-80df-8d3e-cc8e3d82cd76" class="bulleted-list"><li style="list-style-type:disc"><strong>El número:</strong> Indica cuántas direcciones IP tienes disponibles. Un número más grande significa menos direcciones IP disponibles.</li></ul><table id="29ceed79-dd9f-8095-aa9c-e041f765c51f" class="simple-table"><tbody><tr id="29ceed79-dd9f-80dc-8157-cc06c9632391"><td id="nMNI" class="">Notación</td><td id="YJ:D" class="">Cantidad de IPs</td><td id="\E&gt;U" class="">Descripción</td></tr><tr id="29ceed79-dd9f-80af-8683-e74c87d2b94c"><td id="nMNI" class=""><code>/32</code></td><td id="YJ:D" class="">1</td><td id="\E&gt;U" class="">Una sola dirección IP.</td></tr><tr id="29ceed79-dd9f-8044-b2e6-e7152da0003e"><td id="nMNI" class=""><code>/24</code></td><td id="YJ:D" class="">256</td><td id="\E&gt;U" class="">256 direcciones IP disponibles.</td></tr><tr id="29ceed79-dd9f-807d-af74-d39ed519ff71"><td id="nMNI" class=""><code>/16</code></td><td id="YJ:D" class="">65,536</td><td id="\E&gt;U" class="">Más de 65 mil direcciones IP.</td></tr><tr id="29ceed79-dd9f-805d-8f4f-e9ff6a2caddf"><td id="nMNI" class=""><code>/0</code></td><td id="YJ:D" class="">4,294,967,296</td><td id="\E&gt;U" class="">Todas las direcciones IP posibles.</td></tr></tbody></table><h3 id="29ceed79-dd9f-809e-8524-d1b4bc6750ef" class="">Cómo calcular las direcciones IP</h3><p id="29ceed79-dd9f-80b8-962e-fa63bd76f56f" class="">Para saber cuántas IPs tienes, usa esta fórmula simple: <strong>Total de IPs = 2 elevado a (32 - el número)</strong></p><ul id="29ceed79-dd9f-80d4-8176-c7690f6e70b1" class="bulleted-list"><li style="list-style-type:disc"><strong>Ejemplo con </strong><code><strong>/24</strong></code><strong>:</strong> <code>2 elevado a (32 - 24)</code> = <code>2 elevado a 8</code> = <strong>256 IPs</strong>.</li></ul><ul id="29ceed79-dd9f-80f7-a4d0-c39704ccbfa7" class="bulleted-list"><li style="list-style-type:disc"><strong>Ejemplo con </strong><code><strong>/28</strong></code><strong>:</strong> <code>2 elevado a (32 - 28)</code> = <code>2 elevado a 4</code> = <strong>16 IPs</strong>.</li></ul><h3 id="29ceed79-dd9f-800f-a0c7-e178f410babe" class="">Rangos de IP Privadas</h3><p id="29ceed79-dd9f-800d-9683-e5d45bf56954" class="">Hay rangos específicos de IPs que puedes usar para redes privadas. AWS recomienda usar estos para tu VPC.</p><ul id="29ceed79-dd9f-80c3-bc4b-da7d56f5d8b2" class="bulleted-list"><li style="list-style-type:disc"><code>10.0.0.0/8</code></li></ul><ul id="29ceed79-dd9f-8093-a0cf-ea9c9de3d296" class="bulleted-list"><li style="list-style-type:disc"><code>172.16.0.0/12</code></li></ul><ul id="29ceed79-dd9f-8051-b523-e89b683f7374" class="bulleted-list"><li style="list-style-type:disc"><code>192.168.0.0/16</code></li></ul><h3 id="29ceed79-dd9f-80d9-99df-cb20ba7c96d3" class="">IPs reservadas por AWS</h3><p id="29ceed79-dd9f-808d-b9b5-c4bf0bda0f61" class="">AWS reserva las primeras cuatro IPs y la última de cada subred. No puedes usarlas para tus servidores.</p><ul id="29ceed79-dd9f-803d-88a2-e2889dd3e4ca" class="bulleted-list"><li style="list-style-type:disc"><code><strong>.0</strong></code><strong>:</strong> Dirección de la red.</li></ul><ul id="29ceed79-dd9f-8086-8c22-d54b6c20e9c6" class="bulleted-list"><li style="list-style-type:disc"><code><strong>.1</strong></code><strong>:</strong> Para el router de AWS.</li></ul><ul id="29ceed79-dd9f-8069-8e22-e7cc7181b4d3" class="bulleted-list"><li style="list-style-type:disc"><code><strong>.2</strong></code><strong>:</strong> Para el DNS de Amazon.</li></ul><ul id="29ceed79-dd9f-80b8-8243-da87730b0792" class="bulleted-list"><li style="list-style-type:disc"><code><strong>.3</strong></code><strong>:</strong> Reservada para el futuro.</li></ul><ul id="29ceed79-dd9f-809e-a5a7-dd55c0496ea7" class="bulleted-list"><li style="list-style-type:disc"><code><strong>.255</strong></code><strong>:</strong> Dirección de broadcast.</li></ul><p id="29ceed79-dd9f-809c-b153-ff598bccbc05" class=""><strong>Consejo práctico:</strong> Cuando planifiques tu subred, resta 5 IPs del total. Si necesitas 29 IPs, una subred <code>/27</code> (32 IPs totales) no es suficiente, porque <code>32 - 5 = 27</code> IPs útiles. Necesitarías una subred más grande, como <code>/26</code>.</p><h2 id="29ceed79-dd9f-8079-8253-f02560dd3364" class="">IV. Subredes Públicas vs. Privadas</h2><p id="29ceed79-dd9f-80ad-9c35-ded2cb478bd2" class="">Dentro de una VPC, organizas tus recursos en subredes. Estas pueden ser públicas o privadas según cómo las configures. En los diagramas, las públicas suelen ser verdes y las privadas azules.</p><table id="29ceed79-dd9f-80c4-8786-df28eaadc4b2" class="simple-table"><tbody><tr id="29ceed79-dd9f-8019-b82e-de6525f1eca2"><td id="S`K{" class="">Característica</td><td id="{jsr" class="">Subred Pública</td><td id="xVU_" class="">Subred Privada</td></tr><tr id="29ceed79-dd9f-805e-adea-f789acb8da6c"><td id="S`K{" class=""><strong>Diferencia Principal</strong></td><td id="{jsr" class="">Se conecta directamente a un<strong>Internet Gateway (IGW)</strong>.</td><td id="xVU_" class=""><strong>No</strong>se conecta directamente a un IGW.</td></tr><tr id="29ceed79-dd9f-8039-80ce-e03221ca1740"><td id="S`K{" class=""><strong>¿Puede recibir tráfico de internet?</strong></td><td id="{jsr" class=""><strong>Sí</strong>, puede recibir conexiones desde internet (necesita una IP pública).</td><td id="xVU_" class=""><strong>No</strong>, no puede recibir conexiones directas desde internet.</td></tr><tr id="29ceed79-dd9f-8094-b542-ed59d2dfbde5"><td id="S`K{" class=""><strong>¿Puede conectarse a internet?</strong></td><td id="{jsr" class=""><strong>Sí</strong>.</td><td id="xVU_" class=""><strong>Sí</strong>, pero solo a través de un<strong>NAT Gateway (NGW)</strong>.</td></tr><tr id="29ceed79-dd9f-80fe-8d8a-e10160e71c51"><td id="S`K{" class=""><strong>Usos comunes</strong></td><td id="{jsr" class="">Sitios web, balanceadores de carga, servidores de acceso público.</td><td id="xVU_" class="">Bases de datos, servidores de aplicación, servicios internos.</td></tr></tbody></table><h2 id="29ceed79-dd9f-80e8-8dcc-c440de748391" class="">V. Conexión a Internet: Gateways</h2><h3 id="29ceed79-dd9f-80c5-a34e-f8df2001ae5d" class="">Internet Gateway (IGW)</h3><p id="29ceed79-dd9f-80a8-8d23-d1dd5f98652c" class="">El IGW permite que tu VPC se comunique con internet. Es un servicio administrado por AWS, muy confiable y siempre disponible.</p><ul id="29ceed79-dd9f-8028-93e3-d89caf26cb7c" class="bulleted-list"><li style="list-style-type:disc"><strong>Comunicación:</strong> Funciona en ambas direcciones (puede enviar y recibir tráfico).</li></ul><ul id="29ceed79-dd9f-80d4-90c0-ec658d6c5f9d" class="bulleted-list"><li style="list-style-type:disc"><strong>Confiabilidad:</strong> Alta disponibilidad automática.</li></ul><ul id="29ceed79-dd9f-8026-961e-e269c18425f8" class="bulleted-list"><li style="list-style-type:disc"><strong>Costo:</strong> No tiene costo adicional; solo pagas por los datos transferidos.</li></ul><ul id="29ceed79-dd9f-80a5-b32d-f4f2c89725fe" class="bulleted-list"><li style="list-style-type:disc"><strong>Límite:</strong> Solo puedes tener <strong>un IGW por VPC</strong>.</li></ul><h3 id="29ceed79-dd9f-8001-a755-cca93586b216" class="">NAT Gateway (NGW)</h3><p id="29ceed79-dd9f-8062-84ab-cb48b0498f52" class="">El NGW permite que tus recursos privados se conecten a internet, pero evita que internet pueda conectarse a ellos.</p><ul id="29ceed79-dd9f-80a1-9e32-d2e7f0f16886" class="bulleted-list"><li style="list-style-type:disc"><strong>Comunicación:</strong> Solo saliente (tus recursos pueden salir, pero nada puede entrar).</li></ul><ul id="29ceed79-dd9f-80e9-bebf-efeb920b9811" class="bulleted-list"><li style="list-style-type:disc"><strong>Analogía:</strong> Es como hacer un pedido de comida a domicilio. Tú puedes llamar al restaurante, pero el restaurante no puede llamarte sin tu permiso para ofrecerte pizza.</li></ul><ul id="29ceed79-dd9f-8057-9797-d115d4649117" class="bulleted-list"><li style="list-style-type:disc"><strong>Disponibilidad:</strong> Se crea en una Zona de Disponibilidad específica. Para mayor confiabilidad, crea un NGW en cada zona.</li></ul><ul id="29ceed79-dd9f-8079-9d16-eeae5600c01d" class="bulleted-list"><li style="list-style-type:disc"><strong>Costo:</strong> Se cobra por hora y por cantidad de datos procesados. Es más caro que el IGW.</li></ul><ul id="29ceed79-dd9f-807b-a9e3-ec42deac7b22" class="bulleted-list"><li style="list-style-type:disc"><strong>Protocolos:</strong> Funciona con TCP, UDP e ICMP.</li></ul><h2 id="29ceed79-dd9f-80fe-ad4a-c01802289dcb" class="">VI. Enrutamiento y Conexiones Avanzadas</h2><h3 id="29ceed79-dd9f-8088-b36f-f901f7af5e7e" class="">Tablas de Enrutamiento</h3><p id="29ceed79-dd9f-80af-818a-ffbd51820c47" class="">Cada subred necesita una tabla de enrutamiento, que funciona como un mapa que indica hacia dónde va el tráfico de red.</p><ul id="29ceed79-dd9f-807a-9966-e7a53423e964" class="bulleted-list"><li style="list-style-type:disc"><strong>Ruta Local:</strong> Una ruta por defecto (ejemplo: <code>10.0.0.0/16 -&amp;gt; local</code>) permite que todos los recursos dentro de tu VPC se comuniquen entre sí.</li></ul><ul id="29ceed79-dd9f-801a-9075-f131c59d7b88" class="bulleted-list"><li style="list-style-type:disc"><strong>Ruta a Internet (Subred Pública):</strong> Una ruta <code>0.0.0.0/0 -&amp;gt; igw-xxxxxxxx</code> envía todo el tráfico a internet a través del Internet Gateway.</li></ul><ul id="29ceed79-dd9f-806b-ab62-f2bd0a4a792a" class="bulleted-list"><li style="list-style-type:disc"><strong>Ruta a Internet (Subred Privada):</strong> Una ruta <code>0.0.0.0/0 -&amp;gt; nat-xxxxxxxx</code> envía todo el tráfico a internet a través del NAT Gateway.</li></ul><h3 id="29ceed79-dd9f-80f2-978a-c57b2e9f7ec5" class="">VPC Endpoints</h3><p id="29ceed79-dd9f-804b-bd1b-e8e3a58aa37f" class="">Son la forma más segura y eficiente para que tus recursos privados se conecten a servicios de AWS (como S3) sin salir a internet público, manteniendo todo el tráfico dentro de la red de AWS.</p><ul id="29ceed79-dd9f-80de-ab1a-fc1a9ca73552" class="bulleted-list"><li style="list-style-type:disc"><strong>Forma incorrecta:</strong> Enviar el tráfico de un servidor privado a S3 a través de un NGW y un IGW funciona, pero es menos eficiente y menos seguro.</li></ul><ul id="29ceed79-dd9f-8095-a4af-e66925bb2f3a" class="bulleted-list"><li style="list-style-type:disc"><strong>Forma correcta:</strong> Crear un VPC Endpoint para S3 dentro de tu VPC. Esto crea una conexión directa y privada con el servicio, sin salir a internet público.</li></ul></div></details><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">📰 briefing doc</summary><div class="indented"><p id="29ceed79-dd9f-8047-983a-f35e6f18c778" class="">Este documento sintetiza los conceptos clave de la arquitectura de redes en Amazon Web Services (AWS), basados en la presentación de Carlos Isaac Jaldin Benavides. El pilar fundamental es la <strong>Virtual Private Cloud (VPC)</strong>, una red virtual aislada que proporciona seguridad y control—similar a un condominio cerrado. Dentro de esta VPC, el direccionamiento se gestiona mediante <strong>CIDR (Classless Inter-Domain Routing)</strong>, una notación que permite definir rangos de IP de forma flexible y eficiente.</p><p id="29ceed79-dd9f-8000-9e8e-dce3a35fae1f" class="">La arquitectura se divide en <strong>subredes públicas y privadas</strong>. Las subredes públicas se conectan al exterior a través de un <strong>Internet Gateway (IGW)</strong> y alojan recursos accesibles desde internet, como balanceadores de carga. Las subredes privadas, diseñadas para recursos sensibles como bases de datos y servidores de aplicaciones, carecen de acceso directo a internet. Para que los recursos privados inicien conexiones salientes (como actualizaciones de software) sin exponerse a conexiones entrantes, se utiliza un <strong>NAT Gateway (NGW)</strong>. Finalmente, los <strong>VPC Endpoints</strong> permiten comunicación segura y eficiente entre recursos privados y servicios de AWS, sin pasar por la internet pública.</p><h2 id="29ceed79-dd9f-8095-9fe3-cbe4dc49604d" class="">I. Introducción y Contexto</h2><ul id="29ceed79-dd9f-80ce-a195-e03fc28ec6a2" class="bulleted-list"><li style="list-style-type:disc"><strong>Presentador:</strong> Carlos Isaac Jaldin Benavides, Ingeniero de Sistemas con más de seis años de experiencia y más de tres años trabajando para empresas estadounidenses, actualmente en el sector de <em>healthcare</em>.</li></ul><ul id="29ceed79-dd9f-8041-83bf-d3773b598229" class="bulleted-list"><li style="list-style-type:disc"><strong>Motivación de la Charla:</strong> Democratizar la educación haciendo accesible en español información técnica compleja que a menudo solo se encuentra en inglés, como <em>papers</em>, documentación y videos.</li></ul><h2 id="29ceed79-dd9f-80d3-a9ca-e01a42c1945a" class="">II. El Fundamento: Virtual Private Cloud (VPC)</h2><h3 id="29ceed79-dd9f-80e5-89a2-ff6714265013" class="">Definición y Alcance</h3><p id="29ceed79-dd9f-8063-a707-e0e8a5a7d109" class="">Una VPC (Virtual Private Cloud) es una red privada virtual dentro de la nube de AWS. Actúa como un contenedor lógico y aislado donde se pueden lanzar recursos de AWS.</p><ul id="29ceed79-dd9f-80dc-b40b-f88a74e398c7" class="bulleted-list"><li style="list-style-type:disc"><strong>Alcance Geográfico:</strong> Una VPC pertenece a una única región de AWS.</li></ul><ul id="29ceed79-dd9f-8082-acf4-f094dcd571aa" class="bulleted-list"><li style="list-style-type:disc"><strong>Alta Disponibilidad:</strong> Aunque está en una sola región, puede abarcar múltiples Zonas de Disponibilidad (<em>Availability Zones</em>), lo que permite diseñar arquitecturas resilientes y de alta disponibilidad.</li></ul><h3 id="29ceed79-dd9f-801e-9262-d43dc3580c4a" class="">La Importancia del Aislamiento: Analogía del Condominio</h3><p id="29ceed79-dd9f-80e3-9914-f21dc92380ba" class="">Para ilustrar la necesidad de una VPC, se utiliza la analogía de un condominio cerrado.</p><ul id="29ceed79-dd9f-80cd-8537-d78ab77cdd3a" class="bulleted-list"><li style="list-style-type:disc"><strong>El Condominio:</strong> La VPC es el condominio cerrado que proporciona un perímetro de seguridad.</li></ul><ul id="29ceed79-dd9f-804e-91fd-ee5da4a3703a" class="bulleted-list"><li style="list-style-type:disc"><strong>Los Bloques y Departamentos:</strong> Las subredes y los recursos (instancias, bases de datos) son los bloques y departamentos dentro del condominio.</li></ul><ul id="29ceed79-dd9f-806c-8b6d-ebea0926f479" class="bulleted-list"><li style="list-style-type:disc"><strong>Escenario sin VPC:</strong> Un entorno sin VPC sería como un condominio abierto donde cualquier persona del exterior podría entrar a cualquier departamento, usar la cocina o &quot;acostarse en la cama&quot;. En términos tecnológicos, los recursos sensibles estarían expuestos y vulnerables a accesos no autorizados.</li></ul><ul id="29ceed79-dd9f-807c-844e-d3a2efd13739" class="bulleted-list"><li style="list-style-type:disc"><strong>Beneficio Clave:</strong> La VPC garantiza el aislamiento y la privacidad, protegiendo recursos tan sensibles &quot;como la intimidad de nuestra habitación&quot;.</li></ul><h2 id="29ceed79-dd9f-801a-9073-d73bcce2c71d" class="">III. Direccionamiento IP: CIDR y Subnetting</h2><h3 id="29ceed79-dd9f-8077-978c-ff5b8fdfa2db" class="">¿Qué es CIDR?</h3><p id="29ceed79-dd9f-807c-bc06-d99978b64de9" class="">CIDR son las siglas de <em>Classless Inter-Domain Routing</em> (Enrutamiento entre Dominios sin Clases). Es la notación moderna para asignar y especificar rangos de direcciones IP, reemplazando el antiguo sistema de clases (Clase A, B, C), que era más rígido.</p><ul id="29ceed79-dd9f-805d-b2e8-fed5778ac3a9" class="bulleted-list"><li style="list-style-type:disc"><strong>Estructura:</strong> Un bloque CIDR se compone de una dirección IP base y una máscara de red, separadas por una barra inclinada (ej: <code>10.0.0.0/16</code>).</li></ul><ul id="29ceed79-dd9f-8085-88d5-f0563ba317f6" class="bulleted-list"><li style="list-style-type:disc"><strong>La Máscara:</strong> El número después de la barra indica cuántos bits iniciales de la dirección son fijos. Una máscara más grande significa un rango de IPs más pequeño, y viceversa.</li></ul><table id="29ceed79-dd9f-800e-94fc-ea08a10f17db" class="simple-table"><tbody><tr id="29ceed79-dd9f-8006-aecb-e48c5656c4a3"><td id="nMNI" class="">Máscara</td><td id="YJ:D" class="">IPs Totales</td><td id="\E&gt;U" class="">Descripción</td></tr><tr id="29ceed79-dd9f-8025-b777-c09ca984e8ea"><td id="nMNI" class=""><code>/32</code></td><td id="YJ:D" class="">1</td><td id="\E&gt;U" class="">Representa una única dirección IP.</td></tr><tr id="29ceed79-dd9f-801a-bd04-e7fff7ff3556"><td id="nMNI" class=""><code>/24</code></td><td id="YJ:D" class="">256</td><td id="\E&gt;U" class="">Fija los primeros 3 octetos; solo el último puede variar.</td></tr><tr id="29ceed79-dd9f-8067-9815-fdd0a24c476a"><td id="nMNI" class=""><code>/16</code></td><td id="YJ:D" class="">65,536</td><td id="\E&gt;U" class="">Fija los primeros 2 octetos; los dos últimos pueden variar.</td></tr><tr id="29ceed79-dd9f-80af-9c34-e5d4ae8d557c"><td id="nMNI" class=""><code>/0</code></td><td id="YJ:D" class="">4,294,967,296</td><td id="\E&gt;U" class="">Representa todas las direcciones IP posibles en IPv4.</td></tr></tbody></table><h3 id="29ceed79-dd9f-80f3-91d3-d9e8398c450b" class="">Cálculo de Direcciones IP</h3><p id="29ceed79-dd9f-8087-89b9-f11b1ada4291" class="">El número de IPs en un bloque CIDR se calcula con esta fórmula: <strong>IPs Totales = 2 ^ (32 - máscara)</strong></p><ul id="29ceed79-dd9f-8048-9482-c9bca4354dfc" class="bulleted-list"><li style="list-style-type:disc"><strong>Ejemplo con </strong><code><strong>/24</strong></code><strong>:</strong> <code>2 ^ (32 - 24)</code> = <code>2 ^ 8</code> = <strong>256 IPs</strong>.</li></ul><ul id="29ceed79-dd9f-805f-ad81-fdc0e7ceac2e" class="bulleted-list"><li style="list-style-type:disc"><strong>Ejemplo con </strong><code><strong>/28</strong></code><strong>:</strong> <code>2 ^ (32 - 28)</code> = <code>2 ^ 4</code> = <strong>16 IPs</strong>.</li></ul><h3 id="29ceed79-dd9f-8063-b8bf-f3bce47ea1dd" class="">Rangos de IP Privadas</h3><p id="29ceed79-dd9f-808d-9afc-e893ba893a5e" class="">Existen rangos específicos de direcciones IP reservados para redes privadas, que no son enrutables en la internet pública. AWS recomienda usar estos rangos para las VPCs.</p><ul id="29ceed79-dd9f-8013-836b-ea64270ae9c2" class="bulleted-list"><li style="list-style-type:disc"><code>10.0.0.0/8</code></li></ul><ul id="29ceed79-dd9f-80aa-8a47-e97590119982" class="bulleted-list"><li style="list-style-type:disc"><code>172.16.0.0/12</code></li></ul><ul id="29ceed79-dd9f-8076-83b0-ec179f777af9" class="bulleted-list"><li style="list-style-type:disc"><code>192.168.0.0/16</code></li></ul><h3 id="29ceed79-dd9f-80d2-bb27-f3ad4b0f0c64" class="">Reservación de IPs en AWS</h3><p id="29ceed79-dd9f-80c5-86cf-c500a8ab614b" class="">AWS reserva las primeras cuatro y la última dirección IP de cada subred, dejándolas no disponibles para asignar a recursos como instancias EC2.</p><ul id="29ceed79-dd9f-8048-a750-fdb99746da75" class="bulleted-list"><li style="list-style-type:disc"><code><strong>.0</strong></code><strong> (Primera IP):</strong> Dirección de red.</li></ul><ul id="29ceed79-dd9f-8042-bf91-dd43568cf257" class="bulleted-list"><li style="list-style-type:disc"><code><strong>.1</strong></code><strong>:</strong> Reservada para el router de la VPC.</li></ul><ul id="29ceed79-dd9f-802b-8345-c711d81e0dd0" class="bulleted-list"><li style="list-style-type:disc"><code><strong>.2</strong></code><strong>:</strong> Reservada para el DNS de Amazon.</li></ul><ul id="29ceed79-dd9f-80e9-8ccd-d5bcc70bac1b" class="bulleted-list"><li style="list-style-type:disc"><code><strong>.3</strong></code><strong>:</strong> Reservada para uso futuro.</li></ul><ul id="29ceed79-dd9f-8088-a828-fbf2d282482e" class="bulleted-list"><li style="list-style-type:disc"><code><strong>.255</strong></code><strong> (Última IP):</strong> Dirección de <em>broadcast</em> de la red.</li></ul><p id="29ceed79-dd9f-80ec-a5c4-c89124f898fe" class=""><strong>Implicación Práctica:</strong> Al planificar el tamaño de una subred, se deben restar 5 IPs del total disponible. Si se necesitan 29 IPs, una subred <code>/27</code> (32 IPs totales) no es suficiente, ya que <code>32 - 5 = 27</code> IPs usables. Se requeriría una subred más grande, como una <code>/26</code>.</p><h2 id="29ceed79-dd9f-802e-b3d6-c2f11a0758f6" class="">IV. Subredes Públicas vs. Privadas</h2><p id="29ceed79-dd9f-80a4-b85f-f6de480630fb" class="">Dentro de una VPC, los recursos se organizan en subredes, que pueden ser públicas o privadas según su configuración de enrutamiento. En los diagramas, las subredes públicas suelen representarse en verde y las privadas en azul.</p><table id="29ceed79-dd9f-80ba-8735-c6eb3de737c0" class="simple-table"><tbody><tr id="29ceed79-dd9f-803d-8276-cf8441ec8d0c"><td id="S`K{" class="">Característica</td><td id="{jsr" class="">Subred Pública</td><td id="xVU_" class="">Subred Privada</td></tr><tr id="29ceed79-dd9f-80f9-9c29-f37a9e29991a"><td id="S`K{" class=""><strong>Definición Clave</strong></td><td id="{jsr" class="">Tiene una ruta directa a un<strong>Internet Gateway (IGW)</strong>en su tabla de rutas.</td><td id="xVU_" class=""><strong>No</strong>tiene una ruta directa a un IGW.</td></tr><tr id="29ceed79-dd9f-8020-9da0-d2e14822142c"><td id="S`K{" class=""><strong>Recibir Tráfico de Internet</strong></td><td id="{jsr" class=""><strong>Sí</strong>, puede recibir tráfico entrante directamente desde internet (requiere una IP pública).</td><td id="xVU_" class=""><strong>No</strong>, no puede recibir tráfico entrante directamente desde internet.</td></tr><tr id="29ceed79-dd9f-80f3-b1d8-f1d78fc1c985"><td id="S`K{" class=""><strong>Iniciar Conexión a Internet</strong></td><td id="{jsr" class=""><strong>Sí</strong>.</td><td id="xVU_" class=""><strong>Sí</strong>, pero solo a través de un<strong>NAT Gateway (NGW)</strong>.</td></tr><tr id="29ceed79-dd9f-8084-a197-d26b7ea809b2"><td id="S`K{" class=""><strong>Casos de Uso Comunes</strong></td><td id="{jsr" class="">Balanceadores de carga, servidores web públicos,<em>Bastion hosts</em>(servidores de salto), NAT Gateways,<em>VPN endpoints</em>.</td><td id="xVU_" class="">Bases de datos (RDS, Aurora), servidores de aplicaciones,<em>workers</em>, servicios internos, recursos de<em>machine learning</em>.</td></tr></tbody></table><h2 id="29ceed79-dd9f-8093-ae6e-d91a93c61175" class="">V. Conectividad a Internet: Gateways</h2><h3 id="29ceed79-dd9f-8023-9b9f-cfca6239b474" class="">Internet Gateway (IGW)</h3><p id="29ceed79-dd9f-806a-94f0-dff0ef1c1055" class="">El IGW es un componente de VPC que permite la comunicación entre la VPC y la internet pública. Es un servicio gestionado, redundante y altamente disponible.</p><ul id="29ceed79-dd9f-8017-8659-cc2f3b465eae" class="bulleted-list"><li style="list-style-type:disc"><strong>Comunicación:</strong> Bidireccional (permite tráfico entrante y saliente).</li></ul><ul id="29ceed79-dd9f-8065-ac3e-dbc8dea13e4d" class="bulleted-list"><li style="list-style-type:disc"><strong>Disponibilidad:</strong> Alta disponibilidad y escalado horizontal automático (sin zona de disponibilidad específica).</li></ul><ul id="29ceed79-dd9f-8099-aae7-c6242122f52e" class="bulleted-list"><li style="list-style-type:disc"><strong>Costo:</strong> No tiene costo adicional; solo se paga por la transferencia de datos.</li></ul><ul id="29ceed79-dd9f-806b-926d-ee26c934bd22" class="bulleted-list"><li style="list-style-type:disc"><strong>Límite:</strong> Solo se puede asociar <strong>un IGW por VPC</strong>.</li></ul><h3 id="29ceed79-dd9f-8055-a8e5-ca462a56525a" class="">NAT Gateway (NGW)</h3><p id="29ceed79-dd9f-80ac-afb4-ed8edd52c6b4" class="">El NGW permite que las instancias en una subred privada se conecten a internet o a otros servicios de AWS, pero impide que internet inicie una conexión con esas instancias.</p><ul id="29ceed79-dd9f-8087-97e0-c58e132c69d1" class="bulleted-list"><li style="list-style-type:disc"><strong>Comunicación:</strong> Solo saliente (<em>outbound</em>).</li></ul><ul id="29ceed79-dd9f-80de-8bec-ff4de1f56f00" class="bulleted-list"><li style="list-style-type:disc"><strong>Analogía:</strong> Es como llamar a un servicio de entrega a domicilio (<em>Pedidos Ya</em>). &quot;Yo dentro de mi sala llamo a Pedidos Ya&quot;, pero &quot;Pedidos Ya no puede llamar a mi celular y decir, &#x27;Che, ¿te interesa una pizza?&#x27;&quot;.</li></ul><ul id="29ceed79-dd9f-80d4-b571-d73a18ea98d3" class="bulleted-list"><li style="list-style-type:disc"><strong>Disponibilidad:</strong> Se despliega en una Zona de Disponibilidad específica. Para alta disponibilidad, se recomienda desplegar un NGW en cada AZ.</li></ul><ul id="29ceed79-dd9f-8048-929d-e5a981e07bab" class="bulleted-list"><li style="list-style-type:disc"><strong>Costo:</strong> Se factura por hora de aprovisionamiento y por gigabyte de datos procesados. Es descrito como &quot;el primo cheto&quot; del IGW debido a su costo.</li></ul><ul id="29ceed79-dd9f-80e5-bc66-c708b95f1ff1" class="bulleted-list"><li style="list-style-type:disc"><strong>Protocolos:</strong> Soporta TCP, UDP e ICMP.</li></ul><h2 id="29ceed79-dd9f-80c4-a61e-fa2d5ff18a76" class="">VI. Enrutamiento y Conexiones Avanzadas</h2><h3 id="29ceed79-dd9f-807b-9bdd-c2c82fd288da" class="">Tablas de Enrutamiento (Route Tables)</h3><p id="29ceed79-dd9f-8090-96d8-e70efef8dd4e" class="">Cada subred debe estar asociada a una tabla de enrutamiento, que actúa como un mapa que dirige el tráfico de red. Contiene reglas, llamadas rutas, que determinan hacia dónde se envía el tráfico.</p><ul id="29ceed79-dd9f-8003-a2a6-f2a77e3c8909" class="bulleted-list"><li style="list-style-type:disc"><strong>Ruta Local:</strong> Una ruta por defecto (ej: <code>10.0.0.0/16 -&gt; local</code>) permite que todos los recursos dentro de la VPC se comuniquen entre sí.</li></ul><ul id="29ceed79-dd9f-801b-a3a8-d41fb9974518" class="bulleted-list"><li style="list-style-type:disc"><strong>Ruta a Internet (Subred Pública):</strong> Una ruta <code>0.0.0.0/0 -&gt; igw-xxxxxxxx</code> dirige todo el tráfico destinado a internet hacia el Internet Gateway.</li></ul><ul id="29ceed79-dd9f-8053-afec-ef347637f417" class="bulleted-list"><li style="list-style-type:disc"><strong>Ruta a Internet (Subred Privada):</strong> Una ruta <code>0.0.0.0/0 -&gt; nat-xxxxxxxx</code> dirige todo el tráfico destinado a internet hacia el NAT Gateway.</li></ul><h3 id="29ceed79-dd9f-8073-837f-e3848b12f280" class="">VPC Endpoints</h3><p id="29ceed79-dd9f-806c-9464-c14a3a9c499b" class="">Son la forma recomendada y más segura para que los recursos en una subred privada se conecten a servicios de AWS (como S3) sin necesidad de un IGW o un NGW, manteniendo el tráfico dentro de la red de AWS.</p><ul id="29ceed79-dd9f-8038-a687-feeb84a7d16c" class="bulleted-list"><li style="list-style-type:disc"><strong>Método Incorrecto:</strong> Enrutar el tráfico de una instancia privada a S3 a través de un NGW y un IGW es posible, pero ineficiente y menos seguro.</li></ul><ul id="29ceed79-dd9f-8004-bb3a-ca5050bac919" class="bulleted-list"><li style="list-style-type:disc"><strong>Método Correcto:</strong> Crear un VPC Endpoint para S3 dentro de la VPC. Esto añade una ruta en la tabla de enrutamiento que dirige el tráfico destinado a S3 directamente al servicio a través de la red privada de AWS, sin salir a la internet pública.</li></ul></div></details><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">🧠 mind map</summary><div class="indented"><figure id="29beed79-dd9f-800c-98c9-e0eb5e4302a6" class="image"><a href="Understanding%20AWS%20VPC%20A%20First%20Dive%20into%20Cloud%20Netw/NotebookLM_Mind_Map.png"><img style="width:6825px" src="Understanding%20AWS%20VPC%20A%20First%20Dive%20into%20Cloud%20Netw/NotebookLM_Mind_Map.png"/></a></figure></div></details><p id="29ceed79-dd9f-8072-8426-dca83bd7398a" class="">
+</p><figure id="29ceed79-dd9f-80a9-af85-cbcdd8c8ab89" class="image"><a href="Understanding%20AWS%20VPC%20A%20First%20Dive%20into%20Cloud%20Netw/IMG_5288.jpeg"><img style="width:600px" src="Understanding%20AWS%20VPC%20A%20First%20Dive%20into%20Cloud%20Netw/IMG_5288.jpeg"/></a></figure><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">📝 voice memo/transcript</summary><div class="indented"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="29beed79-dd9f-8064-b164-d37227f506ed" class="code code-wrap"><code class="language-Plain Text" style="white-space:pre-wrap;word-break:break-all">eh a Carlos Alín. Eh, bueno, Carlos es una persona bastante cercana a mía. Yo he sido su mentor al inicio de de su carrera profesional y pues para mí es un orgullo tenerlo aquí ahora dando una charla sobre AWC y pues Carlos, ahora yo te cedo el piso para que de escuchar. Gracias, Ro, muchacho.
+Me pongo los lentes para decir más inteligente. Puedo ir Okay. Eh, voy a empezar hablando un poquito sobre mí. Eh, como muchos de acá que conozco, soy egresado de la Gabriel, eh, de la carrera ingeniero en sistemas. Tengo más de 6 años en el Tauro y bueno, más de 3 años trabajando para empresas de USA. Actualmente laburo por una empresa de healthcare de USA.
+Okay. Eh, olvidé mencionarles cuál es mi motivación para esta exposición. Es básicamente hacer accesible información que muchas veces no está accesible en nuestro lenguaje. Los mejores ejemplos están en inglés. Muchos ejemplos que les voy a mostrar ahorita los he sacado de documentos, papers y videos inglés. Entonces, eh me gustaría democratizar un poco la educación y mostrarles estos ejemplos. Eh la agenda de hoy es, bueno, vamos a ver algo super eh básico que es networking. Vamos a hablar sobre qué es una BPC, ¿por qué una BPC? Sobre un poquito por encima sobre ciders y subnetings y sobre subnets públicas y privadas y también sobre internet gateway y not gateway. Okay, vamos a empezar hablando qué es una BPC. Okay. Eh, este es un ejemplo que puede rescatar de por ahí un paper. Pueden ver que muchos diagramas, en el mismo diagrama que nos presentó nuestro amigo César, teníamos VPCs, tenemos subnets, pero Preguntémonos, ¿qué es una BPC? Bueno, una BPC en por su traducción es una red privada virtual en la nube, ¿okay? Virtual private club. Dentro de esa BPC nosotros podemos tener distintas, ya sea pública, subnet privada. La naturaleza es depende del caso uso que nosotros queramos darle. Y dentro de esas subnets, subredes, tenemos lo que son recursos. Pueden ser instancias, puede ser un S3, etcétera. Okay, como pueden ver acá La BPC pertenece a una sola región, pero puede abarcar más de una bailabiliz. ¿Okay? Entonces, es algo que lo tenemos que tener en cuenta al momento de nosotros diseñar nuestra arquitectura y acomodar una BPC. Correcto. Eh, okay. ¿Por qué una BPC? Vamos a empezar hablando sobre una analogía. Eh, imaginemos, no sé si alguna vez les ha tocado, estar en un condominio donde hay bloques. Bueno, tenemos un condominio, un condominio América, digamos, y dentro tenemos bloque A, B, C, D. Okay, es un condominio cerrado. Entonces, nosotros entramos, vamos a nuestro propio departamento, vamos a nuestro propio bloque y vamos a nuestro nuestro departamento, el área social. Hagamos la analogía de una BPC con un condominio cerrado. Imaginemos, no tenemos BPCS, todo es público. Entonces, cualquier persona de cualquier departamento puede entrar a mi departamento y ocupar mi sala. Cualquier persona, incluso del exterior, puede entrar al disque eh condominio cerrado, que ya no está cerrado, y puede entrar a mi cocina, puede acostarse en mi cama donde duermo con mi esposa. Imagínese lo desastroso que es
+el temaillallamiento, no pueden avasallar. Entonces, nosotros no queremos que eso pase en las en las redes, en tech nosotros acomodamos recursos que son muy sensibles, tan sensibles como la intimidad de nuestra habitación. Entonces, para eso nosotros tenemos las BPC. Las dentro de la Virtual Gre Cloud, nosotros tenemos conceptos como subnetting, la manera que nosotros tenemos eh definidas las subreds dentro de nuestra PC. Tenemos también el tema de siders. Siders no es más que una nomenclatura que nosotros ocupamos para definir rangos de IP. ¿Okay? Vamos a hablar primero sobre ciders y submets. Okay. Super ejemplo. Lo voy a explicar muy por encima porque este este es un tema que de hecho tarda un poquito más. Y algunos necesitamos un cuadernito para rayar y explicar, pero muy por encima siders. En la antigüedad se tenían clases, se definían las IPs como clase, clase A, clase B, clase C, algo un poco engorroso. Entonces, cider es como una manera de nosotros definir los rangos de IPS. ¿Okay? Ciders se conforman de segmento y de máscara. De segmento base y de máscara, ¿okay? El numerito que está al ladito del flash es la máscara. El numerito que está a la izquierda es el es la base. Okay. Ciders, si mal no recuerdo, es Classless Interdomain Roading, que es como que su traducción al español es enrutamiento eh de interdominio sin clases, classless sin clases. ¿Okay? Entonces ustedes habrán podido ver si han interactuado con con redes, este tipo de nomenclatura. Por ejemplo, el primero con un slash 32 implica una sola IP. El segundo con un slash cer implica todas las IPS. ¿Okay? Por ejemplo, en este ejemplo tenemos un flash 26 que implica de este rango de acá a este rango de acá, ¿okay? Cada cada segmento puede ser desde 0 a 255, dando un total de 256 variaciones por segmento. ¿Okay? Ustedes lo ven así, pero es gigante. En estos cuatro segmentos podemos almacenar muchísimos, muchísimas rotas. Eh, si se pueden dar cuenta, Mientras más grande es el numerito al ladito del flash, menor es la cantidad de rango de rutas que tenemos. Un ejercicio mental que podríamos hacer muy rápidamente es que podemos agarrar 32, escuchen bien, 32 y restarle al numerito que está al ladito del slash. Eso te va a dar un número x. Por ejemplo, 32 - 32 = 0. Y ese numerito tomarlo como exponente de dos, de una base dos. Entonces, 2 elevado a la base 0 igual a 1. El número de IPs que nosotros tenemos disponible si es que ocupásemos un segmento 32. Por el contrario, si es que nosotros ocupamos un segmento 0 sería 32 - 0 = 32 a la 32. Un número incalculable ahorita para mí, pero si ustedes agarran la calculadora pueden sacarlo fácilmente. ¿Okay? Entonces lo mismo con 24. 24 sería 32 - 24 sería 8 2 a la 8 256 y así sucesivamente. Eh, Algo eh les puede ayudar también a tener un rápido concepto de esto. Como les dije, mientras más grande el número, el el número del segmento, más pequeño el rango que nosotros tenemos es que es es esto del segmento cero todos los obtetos pueden cambiar. ¿Okay? Entonces tenemos 0. Los cuatro ceros pueden cambiar de 0 a 255. A partir de cer0 hasta 8o, hasta ocho, escuchen bien, solo tres segmentos a partir de ocho pueden cambiar. Entonces, el 255, cualquier número que decidamos poner en el primer obteto, eh, se queda fijo y los tres últimos eh obtetos son los que puede podemos ocupar para variar. Y así sucesivamente. Con 16 son los dos últimos obtetos, con 24 es solo el último obteto, como pueden ver acá, y el 32 pues es un número fijo. Nosotros tenemos que saber esto porque en la vida real tenemos casos de uso. Alguien nos dice, &quot;Ey, es que pasa que mi red solamente soporta el usuario.&quot; Entonces, No hay sentido si soportamos solamente 1000 usuarios poder tener más de un millón de IPs disponibles. ¿Okay? Entonces es algo que nosotros tenemos que tener en cuenta, por favor. Okay. Este, tenemos también eh clases de de IPs, ¿okay? Las privadas y las públicas. Ahora, ahorita mismo les voy a mostrar cuáles son los rangos que nosotros podemos ocupar dentro de todo el abanico de IPs posibles para poner IPs privadas. ¿Okay? Recuerden bien esto de 10.0.0.0. slash8. Todo este rango que tenemos, que es supergre, podemos ocuparlo para poner redes privadas de 1721600/12, también para privadas y como lo han podido ver alguna vez, 192 16800 16 son como, imagínense que tenemos como que casilleros y estos son rangos de casilleros que podemos ocupar, de IPs que podemos ocupar para asignar eh IPs privadas. ¿Okay? Las demás, todas las que están fuera de este rango pueden ser públicas. Okay. Entonces, subnes públicas y privadas. Okay. Ah, antes de antes de explicar esto, eh quería comentarles, creo que se me fue aquí un slide, un tip es que al momento de definirle una base con segmento te reserva cinco IPs. Entonces vos no puedes ocupar eh cinco IPs de las que están dentro de ese segmento. Eh, esta es la
+Ahí está.
+Ahí está. Genial. Entonces, no quería irme sin explicarles esto. Entonces, la primera va asignada a dirección de red, por ejemplo, el nombre del edificio. La punto uno, que no es la primera, sería la segunda, es para el BPC router, ¿okay? Algo que vamos a ver más adelante. Entonces, la DNS de Amazon va a la pun, la tres está reservado para un futuro plan de expansión y no vamos la cuatro, sino la quinta sería la 255, que es para el broadcast. Entonces, un ejercicio mental que podríamos hacer ahorita sería pensar, ey, eh, me dijeron que alguien me dijo que necesita 29 IPs para asignar. Entonces, vos decís, 29 IPs, como tengo eh tengo el mindset, tengo ya preconcebido que lo que yo quiero hacer es optimizar la cantidad de IP, ¿cuál es la más cercana a 29? Entonces, ¿cuál es la más cercana a 29? Pensando pensando 2 a la 5 = 32. He a la 5. Asignémosle, asignémosle. Entonces esa IP sería 32 men 5 27. Entonces asignemos un IP de slor acá. ¿Por qué? Porque si nos ponemos a pensar, nos pidieron 29 con slash 27, tenés 32 ifs disponibles. Debería funcionar. Pero no olvidemos que AWS toma cinco IP ifs de todo el rango que vos plaste. Entonces, no nos satisface ponerle slash 27, tiene que ser algo algo que nos permita más espacio, como slash 26. Ahora sí, subnets públicas y subnets privadas. ¿Okay? Van a ver que en la nomenclatura de los diagramas las subnet públicas se representan con color verde y las privadas con color azul. Eh, vamos a explorar en este cuadrito sencillo que es una subnet privada y qué es una subnet pública. Eh, ¿qué es? tiene una ruta al internet gateway en su tabla de rutas, la Snet pública, la SNE privada no tiene no tiene ruta directa de internet gateway. ¿Okay? Más adelante vamos a explicar qué es un internet gateway. Casos de uso para una SUnet pública, imaginémonos basado en la analogía que expliqué que tenemos los bloques dentro de nuestro condominio cerrado. Bueno, las áreas sociales vendrían a ser todas las áreas que yo pretende exponer al público. En este caso, una subnet pública puede abarcar los balancers, passion, eh notwest. Okay. Todo el que yo pretendo hacer público. Existen otros recursos dentro de Amazon que yo quiero crear, quiero dejarlos privados, no quiero que nadie del internet de afuera tenga acceso, como por ejemplo mi departamento, mi cocina, mi cama, mi sala. En tecnología serían las bases de datos, app sersvers o workers. ¿Okay? E las subnet públicas pueden recibir tráfico de internet. Sí, sí pueden. ¿Por qué? De hecho, cuenta con una IP pública y las subnets privadas no pueden, o al menos no directamente. Más adelante con el Netway vamos a averiguar al respecto. Puede iniciar conexión a internet. La subnet pública sí y la subnet privada también, pero siempre y cuando tengamos ahí puesto un gateway. Okay. Subnets públicas. ¿Cuáles son los casos de uso de las subnets públicas? Como les explicaba, eh tenemos nuestra área social pública y tenemos ciertos recursos que queremos acomodar acá. Queremos que de hecho sí sean públicos, como un balancer, por ejemplo, donde una arquitectura común sería tener en el en una a subnet pública, lo balancer y en subnet privada nuestros otros recursos, nuestras otras instancias y sitú eh bas host o jump servers. Esto es un poquito reuscado, quizás eh cuando les muestre el diagramita lo vamos a poder entender mejor. Es como una manera de yo poder acceder a mi recurso privado dentro de una subnet privada. Pongo una instancia dentro de una subnet pública, entonces alguien puede llegar al a mi recurso en la en la subnet pública y saltar y poder cont a mi eh recurso en las privadas. Es es un jueguito que se que se puede hacer. De hecho, hay servicios que te ofrecen esto eh para no tener que poner un jump eh server. Tenemos el N Gateway, muy conocido N Gateway, que lo vamos a hablar en unas slides más adelante. Tenemos el servidor web público, tenemos la web VPN Emp. Okay. Eh, subnet privadas. En cambio, ¿cuáles son los casos de uso? Tenemos servidores de apps, podemos poner base de datos como vendría en un Aurora, un RS. Podríamos poner worker, podríamos poner servicios internos e incluso recursos de machine learning que pretendamos ocupar. De nuevo, en una subnet privada no nos interesa que el público, el de afuera, tenga acceso a nuestros recursos. Okay, finalmente, Internet Gateway versus Net Gateway. Ahora mismo les voy a explicar los casos de uso, pero les voy a dar una mejor explicación con un diagrama Internet gateway. Eh, bueno, el Internet gateway se caracteriza por tener una comunicación bidireccional, es decir, cualquier eh Subnet esté con un internet gateway puede comunicarse, puede tener inbound traffic y puede tener outbo traffic, ¿okay? Eh, escalado automático, escala horizontalmente. En realidad, la arquitectura en internet gateway es un poco más reduzcado. Se trata de tener muchos routers alrededor del mundo. Entonces, si yo necesito más potencia dentro de mi internet gateway, automáticamente se añade router x, x + 1, x + 2, x + 3. Alta disponibilidad. Sí. Eh, de hecho tiene redundancia eh sin costo adicional. Nosotros por ocupar un internet gateway y esto es genial, no nos cobra más que el tráfico. Y una internet gateway por PPC, eh, quiere decir que la internet gateway cree en la monogamia. Solo podemos tener una internet gateway por PC, ¿okay? Y sin availability específica, es decir, están en todas partes y en ninguna. En cambio, pasamos a la siguiente. Tenemos el Nat Gateway, que es como similar pero con otras características, otros casos de uso. Instancias privadas pueden salir a internet, ¿okay? Ahora hablábamos, tengo un recurso dentro de una subnet privada, ¿okay? Y todas las características de mi recurso eh datan de que mi caso de uso tiene que dejarlo privado, pero hay excepciones donde yo necesito actualizar mi recurso y necesito conectarme a internet. Entonces, no lo puedo dejar cerrado en algún punto haciendo la analogía, necesito, digamos, que a mi sala o a mi cuarto entre alguien de mantenimiento, alguien de afuera. o pedidos. Ya. Okay. Entonces, yo puedo ocupar una nway dentro de mi sala, puedo ocupar el teléfono y decir, &quot;Ey, pedido ya, tráeme una pizza, por favor. A esta es mi dirección subió a mi departamento.&quot; Entonces sube y de afuera, del exterior puede entrar y puede dejar la pizza ahí. Internet no puede conectar, no puede iniciar sesión, no puede iniciar conexión hacia adentro. Es decir, basándome en la analogía que les expliqué, yo dentro de mi sala llamo a pedidos ya. Ey, tráigame cierta cosa, pero pedidos ya no puede llamar a mi celular y decir, &quot;Che, ¿te interesa una pizza?&quot; No, no, no. Eh, soporta distintos protocolos. TCP, UDP y NCMP. Vive en una availability zone específica. Y de hecho, si nosotros tenemos un N gateway, una availableity zone y distintos recursos están en distintas ailability y dependen de mi Nat Gateway, si es que mi Nat Gateway se cae por alguna razón, mis otros recursos en otras availability son también se quedan sin acceso a internet. Entonces, hay arquitecturas que nos recomiendan tener una game for por for a avilability s para hacerlo más más disponible, ¿okay? Y es el primo cheto de del internet gateway, es decir, que te cobra por hora y por gigab procesado. Así que ojo, piensen bien al momento de diseñar su arquitectura si es que van a ocupar o no. Okay, ahora aún no nos vamos, aún queda la que es unos diagramas. Gracias. Bueno, okay. Eh eh si pueden ver acá s super rápido. Eh voy a ir al routing. Esto es lo que mencionaba con respecto a las publicet y private subnet. Algo que me olvidé mencionar es roading table. Imagínense, nosotros tenemos departamentos, tenemos todos nuestros bloques, pero para yo caminar a mi departamento para que alguien de tráfico vaya a mi departamento. Necesito saber, necesito tener un mapa, necesito saber, ey, ¿dónde se ubica Carlos, dónde se ubica Apple? Entonces, para eso nosotros tenemos el la tabla de enrutamiento, tenemos destination, destino y target. Okay, esta primera es una muy famosa que es básicamente dentro de mi IP de la BPC que sería 10.0.0.0/16. Tengo un target local. Esto me permite que todos los recursos dentro de mi BPC puedan conectarse, puedan comunicarse entre sí, digamos, yo estoy en mi instancia eh la public subnet, puedo hacer pin con mi otra instancia. Okay. Eh, este otro bloque también es superfamoso, 0.0.0/0, que básicamente significa internet, todas las IPs existentes y el tráfico que tenga como destino todas las IPS existentes o internet, va a pasar por el internet gateway. ¿Okay? Entonces, justo aquí tenemos el internet gateway. Si algo pretende conectarse con el Internet gateway, tengo que pasar Eh, si, perdón, con el internet tiene que pasar con el internet que pudieron ver aquí algo que espero que sí puedan verlo, algo curioso es que mi public tiene IP pública, pero mi private subnet no. Okay, entonces a pesar de que haya puesto las flechitas así, en realidad mi private subnet no va a tener conexiones a internet. Okay. Eh, esto solamente eh, o sea, como que está definido, lógicamente está definido así, pero en realidad no se puede. ¿Qué pasa si yo quisiera conectar mi private sub? al internet. Pues existe algo que se llama Natgway, lo que hablamos, eh, swap IP o algo así se llamaba lo del lo del Nat Gateway, que básicamente como yo no tengo private, yo no tengo una IP pública dentro de mi private, lo que hace es hacer swap y poner la IP que tiene dentro de la gateway y poder conectarse al fin al internet gway. Pero ojo, esto me permite que mis recursos se conecten al internet y puedan traer algo, pero el internet aún sigue inaccesible de poder acceder a mi uso en la private software. Entonces, eso muy depende del caso de uso. Algunas veces nosotros vamos a querer eh isolarlo, dejarlo isolado completamente o algunas veces vamos a querer que se conecte con una Tetw. Okay, para esto tenemos el private road table, que básicamente tenemos el destino, el target similar al anterior, que puedo conectar con mis otros recursos entre sí y que cada vez que yo quiera acceder al internet vamos a ir al NAT Getway ID, que sería este, que se va a conectar posteriormente al internet gateway. Y bueno, vamos a poder arlo. Okay, ahora les voy a mostrar algo curioso que es, ¿qué pasa si un recurso en mi private quiere conectarse, por ejemplo, una stream fuera? Okay, esta es como una manera mala de hacerlo. Es viable, pero no es, o sea, se puede hacer, pero no es no es debido. Es como que yo me puedo conectar a mi N gateway, de ahí me conecto a mi internet gateway y ahí puedo conectar a mi story. Okay, esto es posible, pero no es la manera correcta. Existe una manera correcta de hacerlo, que es un feature que te provee BPC, que sería los BPC tiempo. En este caso, si yo quisiera conectarme al stream, aquí tengo un stream point dentro de mi BPC y cualquier recurso que pretenda conectarse aquí ya tiene este recurso para enrutarse y poder conectar a la estrella afuera. Eh, eso era lo que quería comentarles. Vamos ahora sí a finalizar. Muchas gracias por su atención. Antes de que me aplaudan, este, tengo aquí algo super quickés, algo que saqué de los de los tutoriales de You. es que al final de de la explicación siempre te vienen una ronda de preguntas. Eh, aquí puse un QR con un formulario de un Google Forms que les va a dar retroalimentación, es decir, ustedes pueden entender que qué también está hecho, qué también aprendieron eh de esta explicación. Es sí o no, la verdad que no lo no lo voy a ver, pero ustedes pueden ocuparlo y pueden verificar cuánto han aprendido de esta de esta exposición. Y al ladito está mi perfil de LinkedIn, si si quieren seguirme. Eso es todo. Muchas gracias. de que se nos quiera sentar Carlos, ¿alguien tiene alguna pregunta?
+Estuvo muy claro, no me entendieron nada.
+Bueno, parece que nadie entendió.
+Okay.
+Lo que se preparan nuest nuestras ponentes expositoras. Eh, seguimos con las rondas de preguntas. Eh, una pregunta fácil.
+La dear está medio difícil.
+Sí, sí. ¿Qué significa el
+Okay, okay, okay.
+Eh, Te voy a
+alguien eh me puede decir cuál es el rango de todas las IPsider para cero. Perfecto. Por 25.
+No, pero ya ya al agua.
+Eh, ¿cómo conectas una eh subnet privada a internet? Buenísimo.
+Okay. Y por un llaverito, ¿alguien me puede decir consideres son los rangos de IP privada? Clase AC, clase A 10 bar máscara 8, clase B2 16 máscara 16. Okay. 16 y la tipo C 192.
+La máscara la B de la B
+16.
+24.
+¿Alguien quiere inentar?
+No.
+Ya. Que que sigue intentando soplarle cuál es la marca correcta. No, no, no.
+Solo de la B. Solo de la B.
+Claro, de la B. A ver, validemos que
+Claro, es que la 16 es para clase B y la CL C,
+¿no? La la clase la clase C es 16. Ese es el
+y la B
+no. De la B entendé que era
+es 12, es 12 16. Okay. A ver, otra pregunta difícil.
+Todo es difícil.
+Sí, todo difícil. A ver, todo es difícil. ¿Para qué sirve el internale?
+Ah,
+¿para qué sirve el internale?
+Muy fácil.
+Su nombre lo hice.
+Eh,
+ya. Eh, ¿alguien me puede decir cuáles son los tipos de planes de compras para Y si tú ya ya vos no
+¿Quién?
+Solo dos al agua.
+Algo fácil.
+Ya, algo fácil. ¿Cuántas IPs puedes colocar en AWS en una barra 28?
+Carlos, les ha pasado un tema.
+21 era men.
+Ah, 28 dijo, ¿no? 23 - 5
+28
+No, para 28 son
+cu
+41 Claro. 16 men
+la fórmula -5.
+Sí. Si la fórmula es eh de o sea 30 32 menos el número y eso lo elevas a dos
+y -5 para
+-5
+11 la respuesta.
+Ya, ya,
+ya. ¿Para qué sirve el internet?
+Alguien que no haya respond para tener salida de internet.
+Para sal.
+¿Quién? ¿Quién?
+Pero, ¿quién sabe el internet?
+Levante la mano.
+Levante la mano que quieran poner.
+Levanta la mano. Dale. Para lo que te permite es sacar el tráfico de una priva hacia internet.
+Fue que dijo no fuiste ¿Cuándo es el aniversario de Luel Group?
+Pregunta difícil.
+Dale, dale, dale, dale. Fue ese día que comí un comid
+el 3 de octubre, creo.
+Ese sería nuestro nuestro fish releas.
+Sí, fue válido. Puede ser válido. Ya lo vamos a dejar pasar.
+Pero si no me equivoco es el 26 de agosto, ¿cierto?
+Agostamos
+fue nuestra primera charla que dimos Luis y yo.
+Sí, me acuerdo.
+Okay.
+Ah, bueno, esta estuvo poco difícil. Eh, bueno, para continuar eh queremos invitar</code></pre></div></details><hr id="29ceed79-dd9f-8032-bf83-fb01b61c74b8"/><p id="29ceed79-dd9f-80e5-bea0-fa4ce59fb831" class="">
+</p></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>

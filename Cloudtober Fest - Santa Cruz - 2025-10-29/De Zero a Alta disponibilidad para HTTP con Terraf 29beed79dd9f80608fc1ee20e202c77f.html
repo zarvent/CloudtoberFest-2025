@@ -1,0 +1,755 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>De Zero a Alta disponibilidad para HTTP con Terraform y AWS </title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.collection-content td {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.callout img.notion-static-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.callout p {
+	margin: 0;
+}
+
+.callout h1,
+.callout h2,
+.callout h3 {
+	margin: 0 0 0.6rem;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+blockquote.quote-large {
+	font-size: 1.25em;
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.highlight-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.highlight-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.highlight-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.highlight-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.highlight-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.highlight-default_background {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray_background {
+	background: rgba(42, 28, 0, 0.07);
+}
+.highlight-brown_background {
+	background: rgba(139, 46, 0, 0.086);
+}
+.highlight-orange_background {
+	background: rgba(224, 101, 1, 0.129);
+}
+.highlight-yellow_background {
+	background: rgba(211, 168, 0, 0.137);
+}
+.highlight-teal_background {
+	background: rgba(0, 100, 45, 0.09);
+}
+.highlight-blue_background {
+	background: rgba(0, 124, 215, 0.094);
+}
+.highlight-purple_background {
+	background: rgba(102, 0, 178, 0.078);
+}
+.highlight-pink_background {
+	background: rgba(197, 0, 93, 0.086);
+}
+.highlight-red_background {
+	background: rgba(223, 22, 0, 0.094);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.block-color-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.block-color-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.block-color-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.block-color-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.block-color-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(240, 239, 237, 1);
+}
+.block-color-brown_background {
+	background: rgba(245, 237, 233, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 235, 222, 1);
+}
+.block-color-yellow_background {
+	background: rgba(249, 243, 220, 1);
+}
+.block-color-teal_background {
+	background: rgba(232, 241, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(229, 242, 252, 1);
+}
+.block-color-purple_background {
+	background: rgba(243, 235, 249, 1);
+}
+.block-color-pink_background {
+	background: rgba(250, 233, 241, 1);
+}
+.block-color-red_background {
+	background: rgba(252, 233, 231, 1);
+}
+.select-value-color-default { background-color: rgba(42, 28, 0, 0.07); }
+.select-value-color-gray { background-color: rgba(28, 19, 1, 0.11); }
+.select-value-color-brown { background-color: rgba(127, 51, 0, 0.156); }
+.select-value-color-orange { background-color: rgba(196, 88, 0, 0.203); }
+.select-value-color-yellow { background-color: rgba(209, 156, 0, 0.282); }
+.select-value-color-green { background-color: rgba(0, 96, 38, 0.156); }
+.select-value-color-blue { background-color: rgba(0, 118, 217, 0.203); }
+.select-value-color-purple { background-color: rgba(92, 0, 163, 0.141); }
+.select-value-color-pink { background-color: rgba(183, 0, 78, 0.152); }
+.select-value-color-red { background-color: rgba(206, 24, 0, 0.164); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="29beed79-dd9f-8060-8fc1-ee20e202c77f" class="page sans"><header><img class="page-cover-image" src="https://www.notion.so/images/page-cover/solid_blue.png" style="object-position:center 40%"/><div class="page-header-icon page-header-icon-with-cover"><span class="icon">🗣️</span></div><h1 class="page-title">De Zero a Alta disponibilidad para HTTP con Terraform y AWS </h1><p class="page-description"></p></header><div class="page-body"><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">🎙️voice memo</summary><div class="indented"><figure id="29beed79-dd9f-80dd-aa41-ee8b70b6c0db"><div class="source"><a href="De%20Zero%20a%20Alta%20disponibilidad%20para%20HTTP%20con%20Terraf/2025-10-29_Cesar_Tablero.m4a">attachment:84f1bf39-51e4-4468-bf65-67c9c4207315:2025-10-29_Cesar_Tablero.m4a</a></div></figure></div></details><figure class="block-color-orange_background callout" style="white-space:pre-wrap;display:flex" id="29ceed79-dd9f-80d4-8c25-fe6ad712c907"><div style="font-size:1.5em"><img class="icon notion-static-icon" src="https://www.notion.so/icons/video-camera_orange.svg"/></div><div style="width:100%"><figure id="29ceed79-dd9f-8050-a763-cb669b7a4cc9"><div class="source"><a href="De%20Zero%20a%20Alta%20disponibilidad%20para%20HTTP%20con%20Terraf/De_Cero_a_Alta_Disponibilidad.mp4">attachment:c7528802-bae7-4090-a5d5-acb3a77d69bc:De_Cero_a_Alta_Disponibilidad.mp4</a></div></figure></div></figure><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">📰 briefing doc simplified</summary><div class="indented"><p id="29ceed79-dd9f-8082-9609-f2e26a172fdb" class="">Este documento resume un proyecto práctico sobre cómo crear un sistema web que funcione sin interrupciones. El proyecto usa Terraform (una herramienta para automatizar la creación de infraestructura) y Amazon Web Services (AWS). El problema que resuelve es simple: crear y configurar manualmente todos los recursos necesarios es complicado, toma mucho tiempo y es fácil cometer errores. La solución automatiza todo este trabajo usando código de Terraform que maneja los componentes de AWS. El proyecto se basa en tres ideas principales: <strong>copiar recursos</strong> (tener múltiples servidores), <strong>repartir la carga</strong> entre los servidores y <strong>tener respaldos</strong> listos para cuando algo falle. El sistema usa un balanceador de carga de aplicaciones, grupos de destino y un grupo de autoescalado que ajusta automáticamente la cantidad de servidores según el uso de CPU. Las pruebas demostraron que el sistema funciona: detecta cuando hay mucha actividad, activa alarmas y crea más servidores automáticamente cuando es necesario.</p><hr id="29ceed79-dd9f-804d-9fb9-efd251f5aeee"/><hr id="29ceed79-dd9f-8043-afbb-e86722615bf7"/><h3 id="29ceed79-dd9f-80c5-ad3f-db5d04f385f2" class="">1. Por qué es importante que los servicios siempre funcionen</h3><p id="29ceed79-dd9f-804e-940c-df4c1a2bbdd1" class="">Mantener un servicio funcionando casi todo el tiempo es fundamental para cualquier negocio moderno. Esto significa que el servicio debe estar disponible y ser confiable para los clientes la mayor parte del tiempo posible. Su importancia es clara: garantiza que el negocio siga operando sin interrupciones, evitando problemas que afectan los ingresos y la confianza de los clientes.</p><p id="29ceed79-dd9f-8067-bf31-f579f8cf2c6e" class="">IBM lo define así:</p><p id="29ceed79-dd9f-8002-82f5-d2df1c06bd3c" class="">&quot;La alta disponibilidad es lograr que un servicio esté funcionando y sea confiable para los clientes, no necesariamente el 100% del tiempo, pero la mayor parte del tiempo posible&quot;.</p><h3 id="29ceed79-dd9f-80f1-8583-f89471afd2db" class="">2. Tres técnicas clave usadas en el proyecto</h3><p id="29ceed79-dd9f-80e6-88e1-fcf3b0e0f413" class="">Para lograr que el servicio funcione sin interrupciones, el proyecto usó tres técnicas importantes:</p><ul id="29ceed79-dd9f-80bf-9c8d-de3cb39d8a29" class="bulleted-list"><li style="list-style-type:disc"><strong>Copiar recursos:</strong> Crear varias copias de un servidor (como una instancia EC2) a partir de una plantilla. Así hay múltiples servidores idénticos listos para atender solicitudes.</li></ul><ul id="29ceed79-dd9f-8035-af59-c8260f14a77d" class="bulleted-list"><li style="list-style-type:disc"><strong>Repartir la carga:</strong> Distribuir el tráfico web entre varios servidores. El objetivo es que ningún servidor se sobrecargue y todos funcionen de manera óptima.</li></ul><ul id="29ceed79-dd9f-803c-b91a-f23c2d76097b" class="bulleted-list"><li style="list-style-type:disc"><strong>Tener respaldos:</strong> Mantener un sistema de respaldo inactivo mientras el sistema principal funciona. Si el sistema principal falla, el sistema de respaldo se activa automáticamente para que el servicio no se detenga.</li></ul><h3 id="29ceed79-dd9f-8022-b703-dabce0bf350e" class="">3. El problema: hacerlo manualmente es muy complicado</h3><p id="29ceed79-dd9f-8041-bb07-e534131d98e6" class="">Implementar estas técnicas de forma manual presenta grandes desafíos. Hay que crear, conectar y configurar muchos recursos—un proceso que consume mucho tiempo y es fácil cometer errores.</p><p id="29ceed79-dd9f-80ba-9d11-fe3e02e63483" class="">El mayor problema surge al copiar la infraestructura en diferentes ambientes (por ejemplo, de un ambiente de prueba a otro). Este trabajo repetitivo es tedioso y no se puede escalar fácilmente.</p><h3 id="29ceed79-dd9f-80a4-b513-d261724823a8" class="">4. La solución: automatizar todo con Terraform</h3><p id="29ceed79-dd9f-8004-af57-c31c6ba85a6a" class="">Para resolver los problemas de la gestión manual, el proyecto usó un enfoque llamado Infraestructura como Código con <strong>Terraform</strong>. Esta herramienta permite automatizar la creación y gestión de toda la infraestructura usando código.</p><h3 id="29ceed79-dd9f-8070-843a-f395155e2726" class="">Ventajas de usar Terraform</h3><ul id="29ceed79-dd9f-80dd-8a24-c4a09e5e2203" class="bulleted-list"><li style="list-style-type:disc"><strong>Fácil de leer:</strong> La sintaxis es clara e intuitiva, fácil de entender.</li></ul><ul id="29ceed79-dd9f-80d7-8115-fc140759acad" class="bulleted-list"><li style="list-style-type:disc"><strong>Control de cambios:</strong> Terraform compara lo que tienes actualmente con lo que quieres crear. Antes de hacer cambios, muestra un plan detallado de lo que va a crear, modificar o eliminar.</li></ul><ul id="29ceed79-dd9f-8063-ac9c-ecfa293229a3" class="bulleted-list"><li style="list-style-type:disc"><strong>Historial de versiones:</strong> El código de Terraform se puede guardar en sistemas como Git, permitiendo trabajar en equipo, ver el historial de cambios y volver a versiones anteriores si es necesario.</li></ul><ul id="29ceed79-dd9f-8079-96ec-e6a144757703" class="bulleted-list"><li style="list-style-type:disc"><strong>Código reutilizable:</strong> El proyecto se organizó usando módulos (como funciones) que agrupan recursos relacionados. Esto permite reutilizar código y mantener todo organizado.</li></ul><h3 id="29ceed79-dd9f-8003-b03b-c58bf846ac6e" class="">5. Componentes principales del proyecto en AWS</h3><p id="29ceed79-dd9f-8071-8e93-f218c5886225" class="">El código de Terraform controla varios recursos importantes en AWS:</p><table id="29ceed79-dd9f-80f7-9519-e488c12081b5" class="simple-table"><tbody><tr id="29ceed79-dd9f-80ee-bc30-f3dff047d09d"><td id="u}X&gt;" class="">Componente</td><td id="GQhi" class="">Qué hace</td></tr><tr id="29ceed79-dd9f-80be-8270-ebee1e2a5a1f"><td id="u}X&gt;" class=""><strong>Balanceador de Carga (ALB)</strong></td><td id="GQhi" class="">Recibe el tráfico web y lo reparte entre los servidores disponibles.</td></tr><tr id="29ceed79-dd9f-8010-b5bf-e05ecbf3dbd8"><td id="u}X&gt;" class=""><strong>Grupo de Destino</strong></td><td id="GQhi" class="">Agrupa los servidores EC2 que están listos para recibir tráfico. Se actualiza automáticamente cuando se crean o eliminan servidores.</td></tr><tr id="29ceed79-dd9f-8030-9f6b-c1fd6e4e9627"><td id="u}X&gt;" class=""><strong>Grupo de Autoescalado (ASG)</strong></td><td id="GQhi" class="">El recurso más importante. Gestiona los servidores EC2: crea nuevos cuando se necesitan y elimina los que no se usan.</td></tr><tr id="29ceed79-dd9f-80cc-8121-cf5777633398"><td id="u}X&gt;" class=""><strong>Políticas de Escalado</strong></td><td id="GQhi" class="">Reglas que definen cuándo crear o eliminar servidores. En este proyecto, se basan en métricas como el uso de CPU.</td></tr><tr id="29ceed79-dd9f-80d8-b51d-f26ecaa07844"><td id="u}X&gt;" class=""><strong>Alarmas de CloudWatch</strong></td><td id="GQhi" class="">Monitorean métricas (como el uso de CPU) y activan las políticas de escalado cuando se superan ciertos límites.</td></tr><tr id="29ceed79-dd9f-80b7-a78f-e5afdd175f44"><td id="u}X&gt;" class=""><strong>Recursos de Red</strong></td><td id="GQhi" class="">Incluye componentes básicos como VPC, Subnets y Security Groups que proporcionan la red y seguridad necesarias.</td></tr></tbody></table><h3 id="29ceed79-dd9f-804c-95f7-e81d6ebc29c7" class="">6. Cómo funciona el escalado automático</h3><p id="29ceed79-dd9f-8017-b81c-cb2a8ce4101b" class="">El sistema funciona mediante un ciclo automatizado de monitoreo y acción:</p><ol type="1" id="29ceed79-dd9f-8025-82ee-f4ea653408e7" class="numbered-list" start="1"><li><strong>Monitoreo:</strong> Se vigila constantemente una métrica, como el uso promedio de CPU. Si supera un límite (por ejemplo, más del 40% durante 3 minutos), se activa una alarma en <strong>CloudWatch</strong>.</li></ol><ol type="1" id="29ceed79-dd9f-809d-b1e4-fa3e56b36a5c" class="numbered-list" start="2"><li><strong>Activación de la política:</strong> La alarma envía una señal al <strong>Grupo de Autoescalado</strong>, activando la política correspondiente.</li></ol><ol type="1" id="29ceed79-dd9f-8076-ba39-e999731738a0" class="numbered-list" start="3"><li><strong>Acción:</strong> El Grupo de Autoescalado ajusta la cantidad de servidores. Si hay mucha carga, crea nuevos servidores a partir de la plantilla.</li></ol><ol type="1" id="29ceed79-dd9f-8052-8c75-ea44d5f92c6d" class="numbered-list" start="4"><li><strong>Actualización:</strong> El sistema actualiza automáticamente la lista de servidores disponibles en el <strong>Grupo de Destino</strong>. Esto permite que el <strong>Balanceador de Carga</strong> empiece a enviarles tráfico inmediatamente.</li></ol><h3 id="29ceed79-dd9f-8062-a51b-fb9a80cc4b01" class="">7. Resultados de la prueba práctica</h3><p id="29ceed79-dd9f-806c-8f8b-c0c58aa4ff3d" class="">Se probó que la solución funciona mediante una demostración:</p><ul id="29ceed79-dd9f-8058-8d3a-dcfeb9c98c0f" class="bulleted-list"><li style="list-style-type:disc"><strong>Inicio:</strong> Se empezó con una cuenta de AWS vacía.</li></ul><ul id="29ceed79-dd9f-8063-8527-ee6ec3ef0c05" class="bulleted-list"><li style="list-style-type:disc"><strong>Despliegue:</strong> Se ejecutó el comando <code>terraform apply</code>, que creó toda la infraestructura automáticamente: balanceador de carga, grupo de autoescalado, grupo de destino y un servidor inicial.</li></ul><ul id="29ceed79-dd9f-8053-86fc-d7c885d035a7" class="bulleted-list"><li style="list-style-type:disc"><strong>Prueba de carga:</strong> Se usó un script para generar muchas solicitudes web al balanceador, simulando mucho tráfico.</li></ul><ul id="29ceed79-dd9f-8037-82c2-f88620936cd4" class="bulleted-list"><li style="list-style-type:disc"><strong>Resultado:</strong><ul id="29ceed79-dd9f-8031-a426-fa585e367c7c" class="bulleted-list"><li style="list-style-type:circle">Los gráficos de CloudWatch mostraron que el uso de CPU superó el 40%.</li></ul><ul id="29ceed79-dd9f-80d5-a8ea-d0d40f092fb6" class="bulleted-list"><li style="list-style-type:circle">La alarma se activó correctamente.</li></ul><ul id="29ceed79-dd9f-8097-82f2-edcc5b2f76ec" class="bulleted-list"><li style="list-style-type:circle">El sistema creó automáticamente tres nuevos servidores para manejar la carga adicional.</li></ul></li></ul><p id="29ceed79-dd9f-807f-a11d-ff30f5aa6a0e" class="">La prueba confirmó que el sistema responde automáticamente a los cambios de carga, manteniendo el servicio funcionando.</p><h3 id="29ceed79-dd9f-809f-93ce-ef4696b8a922" class="">8. Conclusiones importantes</h3><ul id="29ceed79-dd9f-8076-966e-c04869fb80c2" class="bulleted-list"><li style="list-style-type:disc"><strong>Importancia crítica:</strong> Mantener los servicios funcionando es esencial para cualquier negocio con muchos clientes.</li></ul><ul id="29ceed79-dd9f-8077-9a0e-e6b33d982dd4" class="bulleted-list"><li style="list-style-type:disc"><strong>Valor de las pruebas:</strong> Se recomienda hacer pruebas de caos para verificar que el sistema responde bien cuando algo falla.</li></ul><ul id="29ceed79-dd9f-8047-a97f-c0be92b7ad1e" class="bulleted-list"><li style="list-style-type:disc"><strong>Usar servicios en la nube:</strong> Proveedores como AWS ofrecen los componentes necesarios para construir sistemas robustos.</li></ul><ul id="29ceed79-dd9f-8079-b8a7-e18131b1e0d0" class="bulleted-list"><li style="list-style-type:disc"><strong>Automatización vital:</strong> Herramientas como Terraform son indispensables para gestionar infraestructuras con más de 10 o 20 recursos, aportando automatización y consistencia.</li></ul></div></details><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">📰 briefing doc</summary><div class="indented"><p id="29ceed79-dd9f-8067-a575-f99298fff8d0" class="">Este documento sintetiza la arquitectura y hallazgos de un proyecto práctico enfocado en implementar un sistema de alta disponibilidad para servicios HTTP. Utiliza Terraform como herramienta de Infraestructura como Código (IaC) sobre Amazon Web Services (AWS). El problema central es la complejidad y naturaleza tediosa de crear y configurar manualmente los numerosos recursos necesarios para garantizar la resiliencia—un proceso ineficiente al replicar entornos. La solución propuesta automatiza este despliegue mediante un módulo de Terraform que orquesta los componentes de AWS. El proyecto se fundamenta en tres técnicas clave de alta disponibilidad: <strong>replicación</strong> de recursos, <strong>balanceo de carga</strong> para distribuir el tráfico y <strong>redundancia</strong> para asegurar la continuidad mediante sistemas de respaldo y procesos de <em>failover</em>. La arquitectura resultante utiliza un Application Load Balancer, Target Groups y—de manera central—un Auto Scaling Group configurado con políticas de escalado dinámico basadas en métricas como el uso de CPU. La demostración práctica validó que el sistema detecta aumentos de carga, dispara alarmas de CloudWatch y escala horizontalmente de forma automática, demostrando la viabilidad y eficiencia del enfoque IaC para construir infraestructuras robustas y autogestionadas.</p><hr id="29ceed79-dd9f-80fd-87df-c1bdecef278a"/><h3 id="29ceed79-dd9f-8011-b24b-e88ebbd273a6" class="">1. El Imperativo de la Alta Disponibilidad</h3><p id="29ceed79-dd9f-80b6-8be6-e70455daca6b" class="">La alta disponibilidad (HA) se ha convertido en un pilar fundamental para las operaciones de negocio modernas. Se define como la capacidad de un servicio para estar disponible y ser confiable para los clientes la mayor cantidad de tiempo posible. Su importancia es crucial: garantiza la continuidad de los flujos de trabajo y procesos de negocio, evitando caídas que impactan negativamente los ingresos y la confianza del cliente.</p><p id="29ceed79-dd9f-80cd-826f-e015516bd9cd" class="">Una cita de un post de IBM define el concepto así:</p><p id="29ceed79-dd9f-807c-9ac9-e2eb8287332d" class="">&quot;La alta disponibilidad de los servicios es un concepto que trata de que un servicio que tú tengas que esté funcionando, que sea o que esté disponible y que sea fiable para clientes, no necesariamente el 100% del tiempo, pero la mayor cantidad de tiempo posible&quot;.</p><h3 id="29ceed79-dd9f-80ff-b3aa-e832cadd0707" class="">2. Técnicas Fundamentales Implementadas</h3><p id="29ceed79-dd9f-80c0-b7d7-d48c86f79fb0" class="">Para lograr la alta disponibilidad en el proyecto, se aplicaron tres técnicas esenciales utilizadas comúnmente en la gestión de infraestructura para servicios HTTP.</p><ul id="29ceed79-dd9f-80cc-910d-cca257760934" class="bulleted-list"><li style="list-style-type:disc"><strong>Replicación:</strong> Crea múltiples copias de un recurso (como una instancia EC2) a partir de una plantilla. Esto asegura que existan múltiples unidades de trabajo idénticas listas para procesar solicitudes.</li></ul><ul id="29ceed79-dd9f-8078-b031-f58d2710b939" class="bulleted-list"><li style="list-style-type:disc"><strong>Balanceo de Carga (Load Balancing):</strong> Distribuye el tráfico de red—ya sea interno o externo—entre un conjunto de recursos o servidores backend. Su objetivo es mantener un estado operativo óptimo, evitando que un solo recurso se sobrecargue.</li></ul><ul id="29ceed79-dd9f-8068-8790-e7c349ee4710" class="bulleted-list"><li style="list-style-type:disc"><strong>Redundancia:</strong> Mantiene un sistema secundario o de respaldo (<em>backup</em>) que permanece inactivo mientras el sistema principal está operativo. En caso de falla del sistema primario, se activa un proceso de conmutación por error (<em>failover</em>), donde el sistema secundario asume las operaciones para minimizar el tiempo de inactividad (<em>downtime</em>).</li></ul><h3 id="29ceed79-dd9f-8040-987e-ed61e295f76d" class="">3. El Problema: Complejidad de la Implementación Manual</h3><p id="29ceed79-dd9f-8055-86e6-e4ef8ec3cc01" class="">La implementación manual de estas técnicas presenta desafíos significativos. Requiere crear, conectar y configurar una gran cantidad de recursos—un proceso que no solo consume tiempo sino que también es propenso a errores humanos.</p><p id="29ceed79-dd9f-805b-8374-d44b4f972518" class="">El principal punto de fricción surge al replicar la infraestructura en diferentes entornos (por ejemplo, de un entorno de <code>staging</code> a otro). Este trabajo repetitivo se convierte en un proceso tedioso que carece de escalabilidad y consistencia.</p><h3 id="29ceed79-dd9f-80d0-8c94-f748755bdffa" class="">4. La Solución: Infraestructura como Código con Terraform</h3><p id="29ceed79-dd9f-80df-a224-eaaf214a3950" class="">Para superar los desafíos de la gestión manual, el proyecto adoptó un enfoque de Infraestructura como Código (IaC) utilizando <strong>Terraform</strong>. Esta herramienta permite automatizar el aprovisionamiento y la gestión del ciclo de vida de la infraestructura de manera declarativa.</p><h3 id="29ceed79-dd9f-8080-bbb6-d2005702a7d0" class="">Ventajas de Terraform en el Proyecto</h3><ul id="29ceed79-dd9f-80ea-8f81-f2fb71f66371" class="bulleted-list"><li style="list-style-type:disc"><strong>Lenguaje Legible por Humanos:</strong> Su sintaxis declarativa es intuitiva y facilita la comprensión de la infraestructura definida.</li></ul><ul id="29ceed79-dd9f-80d4-a9fe-dd6270783714" class="bulleted-list"><li style="list-style-type:disc"><strong>Seguimiento de Cambios:</strong> Terraform utiliza un archivo de estado para comparar la configuración actual con la infraestructura desplegada. Antes de aplicar cambios, muestra un plan detallado de lo que se creará, modificará o eliminará, proporcionando seguridad y previsibilidad.</li></ul><ul id="29ceed79-dd9f-801f-b637-ced440ffd3e1" class="bulleted-list"><li style="list-style-type:disc"><strong>Control de Versiones:</strong> El código de Terraform puede versionarse en sistemas como Git, permitiendo el trabajo colaborativo, el seguimiento del historial de cambios y la capacidad de revertir a versiones anteriores.</li></ul><ul id="29ceed79-dd9f-801c-816d-f7bd345fff3b" class="bulleted-list"><li style="list-style-type:disc"><strong>Modularidad:</strong> El proyecto se estructuró usando módulos de Terraform, que actúan como funciones reutilizables agrupando recursos relacionados (ej. networking, seguridad, balanceo de carga). Esto promueve la reutilización de código y una organización lógica de la infraestructura.</li></ul><h3 id="29ceed79-dd9f-803f-80af-e4af0f262d1f" class="">5. Arquitectura del Proyecto en AWS</h3><p id="29ceed79-dd9f-80f5-a48f-deab2a569733" class="">El módulo de Terraform desarrollado orquesta un conjunto de recursos clave en AWS para construir la arquitectura de alta disponibilidad.</p><table id="29ceed79-dd9f-80b6-bff5-d2d781558f69" class="simple-table"><tbody><tr id="29ceed79-dd9f-8085-80cb-e60ebd9ca9b4"><td id="&lt;dQd" class="">Recurso Principal</td><td id="l@yK" class="">Descripción y Función</td></tr><tr id="29ceed79-dd9f-802f-98c6-d6eeae146793"><td id="&lt;dQd" class=""><strong>Application Load Balancer (ALB)</strong></td><td id="l@yK" class="">Recibe el tráfico HTTP externo y lo distribuye a las instancias disponibles.</td></tr><tr id="29ceed79-dd9f-80cd-b03c-e69035ee9ef4"><td id="&lt;dQd" class=""><strong>Target Group</strong></td><td id="l@yK" class="">Actúa como un pivote, agrupando las instancias EC2 disponibles para recibir tráfico del ALB. Es actualizado dinámicamente por el Auto Scaling Group.</td></tr><tr id="29ceed79-dd9f-805e-925c-d77c21bb3f1c"><td id="&lt;dQd" class=""><strong>Auto Scaling Group (ASG)</strong></td><td id="l@yK" class="">Considerado el recurso más importante del proyecto, gestiona el ciclo de vida de las instancias EC2. Se encarga de la replicación (crear nuevas instancias) y la reducción (terminar instancias innecesarias) de forma automática.</td></tr><tr id="29ceed79-dd9f-8045-b41b-e2e2dc9237ef"><td id="&lt;dQd" class=""><strong>Scaling Policies</strong></td><td id="l@yK" class="">Políticas de escalamiento que definen las condiciones bajo las cuales el ASG debe actuar. En este proyecto, se utilizó un método de escalado<strong>dinámico basado en métricas</strong>.</td></tr><tr id="29ceed79-dd9f-80d2-ac62-f4f500bbcfe7"><td id="&lt;dQd" class=""><strong>CloudWatch Alarms</strong></td><td id="l@yK" class="">Monitorean métricas específicas (como el uso de CPU) y actúan como disparadores (<em>triggers</em>) para las políticas de escalado cuando se superan los umbrales definidos.</td></tr><tr id="29ceed79-dd9f-80d9-b605-de671149401d"><td id="&lt;dQd" class=""><strong>Recursos de Red</strong></td><td id="l@yK" class="">Incluye componentes estándar como VPC, Subnets y Security Groups para proporcionar el entorno de red y seguridad necesario.</td></tr></tbody></table><h3 id="29ceed79-dd9f-80f3-8266-e0cbc293f5ad" class="">6. Mecanismo de Autoescalado Dinámico: Flujo de Operación</h3><p id="29ceed79-dd9f-80a9-83c1-f14e962d0d77" class="">El núcleo funcional del sistema se basa en un ciclo de retroalimentación automatizado entre el monitoreo y la acción, orquestado por varios servicios de AWS.</p><ol type="1" id="29ceed79-dd9f-80aa-b074-e3099e7c1f25" class="numbered-list" start="1"><li><strong>Monitoreo y Detección:</strong> Una métrica, como el promedio de uso de CPU de las instancias, es monitoreada continuamente. Si supera un umbral predefinido (ej. &gt;40% durante 3 minutos), se activa una alarma de <strong>CloudWatch</strong>.</li></ol><ol type="1" id="29ceed79-dd9f-8018-90d3-c6573e379605" class="numbered-list" start="2"><li><strong>Disparo de la Política:</strong> La alarma de CloudWatch envía una señal al <strong>Auto Scaling Group</strong>, activando la política de escalado correspondiente.</li></ol><ol type="1" id="29ceed79-dd9f-80f8-aff4-f6fa88887ee8" class="numbered-list" start="3"><li><strong>Acción de Escalado:</strong> El Auto Scaling Group, usando sus algoritmos internos, ajusta la cantidad de instancias. En caso de alta carga, aprovisiona nuevas instancias a partir de la plantilla definida para escalar horizontalmente (<em>scale out</em>).</li></ol><ol type="1" id="29ceed79-dd9f-80d5-9d1a-d8462649e79b" class="numbered-list" start="4"><li><strong>Actualización del Balanceador:</strong> El ASG actualiza automáticamente la lista de instancias disponibles en el <strong>Target Group</strong>. Esto informa al <strong>Application Load Balancer</strong> sobre las nuevas instancias saludables, permitiéndole comenzar a dirigirles tráfico de inmediato.</li></ol><h3 id="29ceed79-dd9f-8011-a9e0-de18f3903c5f" class="">7. Resultados de la Demostración Práctica</h3><p id="29ceed79-dd9f-80b3-a451-cf6a2c60c288" class="">La efectividad de la solución fue validada mediante una demostración en vivo que siguió estos pasos:</p><ul id="29ceed79-dd9f-8027-9167-d7b6a8e4e319" class="bulleted-list"><li style="list-style-type:disc"><strong>Estado Inicial:</strong> Se partió de una cuenta de AWS sin recursos preexistentes.</li></ul><ul id="29ceed79-dd9f-80e8-a77b-fac679a886c1" class="bulleted-list"><li style="list-style-type:disc"><strong>Despliegue con Terraform:</strong> Se ejecutó el comando <code>terraform apply</code>, que aprovisionó toda la infraestructura definida en el código: un ALB, un ASG, un Target Group y una instancia EC2 inicial (configurada como el estado deseado al inicio).</li></ul><ul id="29ceed79-dd9f-800a-8d10-fc2097dbe92f" class="bulleted-list"><li style="list-style-type:disc"><strong>Prueba de Estrés:</strong> Se utilizó un script para generar una carga constante de solicitudes HTTP al ALB, simulando un aumento de tráfico.</li></ul><ul id="29ceed79-dd9f-80e3-a346-e5e8d55442de" class="bulleted-list"><li style="list-style-type:disc"><strong>Respuesta del Sistema:</strong><ul id="29ceed79-dd9f-80bb-9683-eeca5b50dc62" class="bulleted-list"><li style="list-style-type:circle">Los gráficos de CloudWatch mostraron que el uso de CPU de la instancia superó el umbral del 40%.</li></ul><ul id="29ceed79-dd9f-80be-a7e5-ea276444cce4" class="bulleted-list"><li style="list-style-type:circle">La alarma de CloudWatch se disparó correctamente.</li></ul><ul id="29ceed79-dd9f-8015-bea7-f9eed9840d68" class="bulleted-list"><li style="list-style-type:circle">La política de escalado se activó, y el Auto Scaling Group creó automáticamente tres nuevas instancias para manejar la carga adicional.</li></ul></li></ul><p id="29ceed79-dd9f-805f-9288-cdb4b32e072d" class="">La demostración confirmó que la arquitectura reacciona autónomamente a las condiciones de carga, manteniendo la disponibilidad del servicio.</p><h3 id="29ceed79-dd9f-8066-a6c1-c0c2b3bd3499" class="">8. Conclusiones y Lecciones Clave</h3><ul id="29ceed79-dd9f-80f5-a16e-de0300b49e4b" class="bulleted-list"><li style="list-style-type:disc"><strong>Criticidad de la Alta Disponibilidad:</strong> Es una práctica esencial para cualquier negocio con una base de clientes considerable, garantizando la continuidad y la confianza.</li></ul><ul id="29ceed79-dd9f-8026-8d48-e464e1ff3b17" class="bulleted-list"><li style="list-style-type:disc"><strong>Importancia de las Pruebas:</strong> Se recomienda realizar &quot;pruebas del caos&quot; (<em>chaos testing</em>) para predecir el comportamiento del sistema ante fallos y validar la resiliencia de la arquitectura.</li></ul><ul id="29ceed79-dd9f-80b4-a2d1-e05a863ac9b3" class="bulleted-list"><li style="list-style-type:disc"><strong>Aprovechamiento de Servicios Cloud:</strong> Los proveedores como AWS ofrecen los componentes necesarios (&quot;building blocks&quot;) para construir sistemas de alta disponibilidad complejos.</li></ul><ul id="29ceed79-dd9f-80a0-8fb2-e333c6142c62" class="bulleted-list"><li style="list-style-type:disc"><strong>El Papel Vital de IaC:</strong> Herramientas como Terraform son indispensables para gestionar infraestructuras con más de 10 o 20 recursos, aportando automatización, consistencia y escalabilidad al proceso.</li></ul><hr id="29ceed79-dd9f-8071-a82e-ee5f63ab1a1c"/><h3 id="29ceed79-dd9f-802b-8df5-d1233b93bb37" class="">Anexo: Sesión de Preguntas y Respuestas</h3><p id="29ceed79-dd9f-806d-81f1-ec3fb99c76c9" class="">Durante la sesión final, se abordaron preguntas clave que arrojaron luz sobre aspectos adicionales de la implementación.</p><table id="29ceed79-dd9f-80de-9525-ff157e10247e" class="simple-table"><tbody><tr id="29ceed79-dd9f-804a-a664-c6f2eafcbc17"><td id=";GAp" class="" style="width:303px">Pregunta</td><td id="i\t?" class="" style="width:675px">Resumen de la Respuesta</td></tr><tr id="29ceed79-dd9f-8071-a2a2-f32fa9a7ce3b"><td id=";GAp" class="" style="width:303px"><strong>¿Cómo detectar tráfico malicioso para evitar que dispare el escalado?</strong></td><td id="i\t?" class="" style="width:675px">Se puede configurar CloudWatch para monitorear logs y crear alarmas personalizadas basadas en patrones que indiquen actividad maliciosa. Esto requeriría una configuración <em>custom</em> más allá de las métricas predefinidas.</td></tr><tr id="29ceed79-dd9f-8044-a388-ec91adad48a4"><td id=";GAp" class="" style="width:303px"><strong>¿Es posible integrar CloudWatch con otros servicios para apagar instancias manualmente durante un ataque de denegación de servicio (DoS)?</strong></td><td id="i\t?" class="" style="width:675px">Es probable que sí. Las alarmas de AWS tienen un bloque de &quot;acciones&quot; que puede ser personalizado. Sería posible configurar una acción para enviar una señal a otro servicio que ejecute una lógica más compleja, como el apagado de instancias o el bloqueo de IPs.</td></tr><tr id="29ceed79-dd9f-80ec-9460-ff1c86f42750"><td id=";GAp" class="" style="width:303px"><strong>¿Por qué se eligió Terraform en lugar de AWS CloudFormation?</strong></td><td id="i\t?" class="" style="width:675px">La razón principal fue la experiencia previa del presentador con Terraform. En la discusión, se señaló que CloudFormation es una herramienta nativa y exclusiva de AWS, mientras que Terraform ofrece soporte para múltiples proveedores de nube.</td></tr></tbody></table></div></details><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">🧠 mindMap</summary><div class="indented"><figure id="29beed79-dd9f-8091-8f09-c2a3527488cb" class="image"><a href="De%20Zero%20a%20Alta%20disponibilidad%20para%20HTTP%20con%20Terraf/NotebookLM_Mind_Map.png"><img style="width:10718px" src="De%20Zero%20a%20Alta%20disponibilidad%20para%20HTTP%20con%20Terraf/NotebookLM_Mind_Map.png"/></a></figure></div></details><p id="29ceed79-dd9f-801b-be89-ff5e0d3839c2" class="">
+</p><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">📝 voice memo/transcript</summary><div class="indented"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="29beed79-dd9f-80c9-a917-f3e7b89826c4" class="code code-wrap"><code class="language-Plain Text" style="white-space:pre-wrap;word-break:break-all">charla y pues ahora te cedo la palabra para que nos pueda hablar de este bonito tema.
+Ya, gracias.
+Gracias, gracias. Eh, buenas noches. Eh, bueno, gracias por la invitación. Eh, sí, bueno, básicamente quiero la idea de este de esta presentación es compartir un un proyecto que he estado trabajando manera de práctica eh en los últimos meses eh relacionado en parte a WS. Entonces, yo dije, bueno, vamos a llevar allá con los muchachos para que partamos y haya retroalimentación y veamos qué ideas buenas surgen, ¿no?, a partir de esta competación. Eh, ¿de qué trata? Bueno, básicamente el cículo, como lo vemos allí, eh, de cero alta disponibilidad para HTTP con Terrafor y AWS. Bien, bien. Eh, está dividido en tres partes. Eh, tenemos primero una parte introductoria donde vamos a hablar un poquito las definiciones, el problema solución, eh un poquito cómo funciona el proyecto, el módulo que se creó aquí. Eh, una demo, un videío les voy a mostrar para que veamos más o menos eh prácticamente cómo está funcionando y conclusiones con algunas lecciones. Muy bien, entonces vamos a la frase clave, ¿no? Eh, bueno, hoy en día en lo que son en lo que es ya la las industrias cómo se está moviendo. Eh, es crucial, es vital que todas las compañías eh practiquen lo que es la alta disponibilidad en sus servicios y precisamente en servicio de tipo que maneja el protocolo HTTP. Eh, esto para que le permita, ¿verdad?, que sus negocios, sus flujos de trabajo, sus procesos eh estén continuamente eh funcionando. es decir, que evitemos que hayan caídas y todo el tipo de eh de problemas. Pero okay, hablamos de alta disponibilidad. Pero, ¿qué de qué se trata esto de alta disponibilidad? Bueno, eh un concepto que vi chévere en un post de de esta empresa IBM, eh ellos mencionan que la alta disponibilidad de los servicios es un concepto que trata de eh de que un servicio que tú tengas eh que esté funcionando esté que sea o que esté disponible y que sea fiable, ¿verdad?, para clientes, eh no necesariamente el 100% del tiempo, pero la mayor cantidad de tiempo posible, porque eso le da confianza a los clientes, eh hace que tu máquina de de producto esté siempre continuamente funcionando y obviamente eso eh mantiene su su esquema de negocio activo. Para poder mantener este concepto de alta disponibilidad existen muchas técnicas, ¿verdad?, que en el mundo de la infraestructura se practican. Eh, pero para efecto de este proyecto, eh, yo voy a mencionar tres las cuales eh usé de referencia y las puse en práctica. Bien, tres técnicas que comúnmente cuando estén ustedes trabajando en este mundo de servicio HTTP van a van a estar por ahí escuchándola. La primera, eh, Tenemos replicación. Replicación simplemente se trata el concepto de que tienes un recurso, digamos, un servidor, una instancia C2, eh tienes que tener la capacidad de eh de que tú puedas replicar ese ese recurso o hacer copias a partir de una plantilla para que lo uses para cumplir ciertas necesidades. ¿Cuáles? Vamos a ver para qué nos puede servir. Una de esas necesidades pudiese ser para usarlas en lo que es un proceso de balanceo de carga. El balanceo de carga no es más que eh un mecanismo que permite distribuir tráfico, ya sea externo o interno, eh a distintas cargas o a distintos recursos que tú tengas en un backet para que esto te permita mantener un estado óptimo, ¿verdad?, del funcionamiento del servicio. Hay mucho tráfico, el balanceador de carga puede distribuir eh entre varios lobos para que eh esté en un estado aceptando. Okay, esa es otra de las técnicas. La tercera se llama redundancia. Eh, redundancia se trata de eh un mecanismo, ¿verdad? O o un proceso en donde se aplica o se practica para que cuando tú tengas eh tu sistema principal, ¿verdad?, que está funcionando, está online, siempre debes tener, sobre todo cuando son sistemas críticos, debes tener, como quien dice tu backup, es decir, un sistema que tengas allí por si acaso. Ahí tienes al un problema en el sistema principal. Entonces, si esto ocurre esto, eh activa la redundancia y eh se activa o o ocurre lo que es el switch, se llama failover. Lo van a escuchar seguramente. Ese failover es el proceso del switch cuando el primario por alguna razón x o y z eh tiene algún problema. Entonces se activa y el secundario toma ahora el mando para tratar de así esté lento, así esté digamos un poco o calentándose tarde tiempo, pero eh tienen allí como que algo seguro para que para evitar eh el la menor cantidad de down time. Okay. Entonces, tenemos esas tres técnicas. Bien, en algunos proyectos que estuve trabajando ya, sí, hace ya meses, incluso un par de años, eh me di cuenta que nada, cuando estás tratando de crear los recursos cursos para poder eh establecer estas técnicas, eh necesitas una gran cantidad de recursos, necesitas crearlo. Además necesitas hacer conexiones, configuraciones y todo ese tipo de trabajo. Eh, digamos que lo hace la primera vez, lo hace para un environment, digamos, un environment que se llame state, ¿verdad? Bien, lo cumpliste, hiciste todo, pero llegamos a los 6 meses te pidieron, mira, ha lo mismo para otro envid Entonces, tienes que volver a hacer, ya recordaste, oye, tengo que crear 20 recursos, tengo que conectarlo, quizás tengas por allí tu procedimiento, eh, notas, guías, pero allí está el problema. Se vuelve un proceso tedioso cuando quiere eh digamos replicar un trabajo que hiciste aquí, ahora aquí. Entonces, ahí está el problema y aparte para poder aplicar todo eh digamos para aplicar las técnicas que vimos. Entonces,
+voy a poner la
+siguiente, por favor.
+No es mí
+la solución para herramientas que te ayuden a, digamos, automatizar lo más que pueda ese tipo de de trabajo. Una de esas herramientas eh que se usan eh son esas herramientas de de la categoría que llamamos infraestructura como código. En este proyecto eh yo me yo elegí o me decidí a trabajar con Terrafom. Es una de estas herramientas que te cubre eh o te ayuda a cubrir esta necesidad que les mencioné ahorita. Eh tiene ciertas ventajas con respecto a otra herramientas y además te facilita ese trabajo de
+de la creación de de los recursos para cumplir con las técnicas aplicación, redundancia y balanceo. Muy bien. Okay. Sí. Okay. Ya como vimos de qué trata o de qué va la cosa, vamos a ver ahora cómo funciona ese módulo que eh yo he elaborado con con Terra. Bien, aquí les muestro un diagrama de arquitectura, lo que llegó hasta ahora con los recursos, digamos, los principales. Hay unos por allí secundarios que bueno, digamos eh no para efecto de lo que es esta posición no son tan importantes, pero mayúscula
+vamos a mencionar por los momentos eh los que están relacionados a las técnicas que les les mencioné
+de arriba de arriba de izquierda a derecha tenemos el primero, el application ad balancer, les mencioné el concepto ahorita
+eh en AWS ellos tienen ese recurso y lo que haces es eso, eh recibes tráfico externo o interno y lo enrut a un conjunto de targets, en este caso eh para el proyecto eh son instancias S2, ¿verdad? Todo minúsculo,
+que eh están agrupadas en otro recurso que se llama Target Group. Este Target Group sirve eh precisamente para definir cuáles son esos recursos o instancias disponibles para que los adancer las use, ¿verdad? A su vez, ese target hace con como de pivote entre el balanceador de carga y el siguiente recurso que está a su derecha que se llama el grupo de autoescalamiento, autoescaling group. Ese para este proyecto vendría siendo el recurso más importante. ¿Por qué? Bueno, porque este recurso te permite aplicar varias eh sí, de las técnicas que mencionamos eh anteriormente. Eh, el Autocalling Group básicamente es un recurso de WS que te permite replicar ¿verdad?, en base a ciertas necesidades y no solo replicar eh digamos crear crear esas copias, sino también quitar según esas necesidades e utiliza un esquema de políticas, ¿verdad?, para poder plasmar esas necesidades que les menciono, esas condiciones. Se llaman política de escalamiento. E esto, este grupo de autoescalamiento usa perdón Este grupo de autoescalamiento tiene muchos métodos para eh cómo ustedes escalar ahí que si eh agendado. Por ejemplo, los lunes mi servicio normalmente tiene bastante tráfico, entonces le voy a exponer el lunes que me inicie eh o me cree instancia. Hay otro que es predictivo. Eh revisa ahí ciertos valores, no sé qué de la instancia. Entonces si se cumplen condiciones eh que pudiese el día jueves, eh lanza instancias el día jueves y el que yo utilicé aquí que se llama es el método eh dinámico basado en métricas. Básicamente lo que hace eh eh este método es que utiliza métricas de las instancias, eh las evalúa y si se cumplen las condiciones de la para la métrica, si se cumplen condiciones que pasen umbrales, ¿verdad? Entonces allí actúa, lanza instancia, quita instancia. Bien, entonces ese fue esa es la metodología que utilizamos aquí. Eh, sí, el resto de los componentes que ven allí de los recursos son ya algunos que ustedes han visto que si SNETs, BTC, Security Groups. Eh, vamos a continuar a darle un poquito más de profundidad a cómo funciona estas políticas de las políticas relacionadas al grupo de escalamiento. Bueno, fíjense lo siguiente. ¿Cómo funciona adentro el grupo de escalamiento con esta metodología? Resulta que nosotros políticas eh para el grupo, son como subrecursos del grupo de escalamiento, ¿no? Y le dice, &quot;Mira, yo quiero para la métrica, por ejemplo, CPU, el CPU eh de las instancias, el promedio de de uso de CPU de las instancias, sio un umbral de, por ejemplo, 40%, entonces actúa. ¿Okay? Eso lo definimos como recursos de AWS normal, así política. Pero, ¿qué pasa? ¿Qué hace los escalamientos cuando tú crees esas políticas? crea lo que son las alarmas de Cloudwatch, lo mencionó Noemi ahorita un tipo de otro tipo de de servicio. Eh, y entonces él transforma esas políticas, eh, las transforma o en parte eh crea alarmas basados en las políticas para usarnos de generadores de venta. Viendo aquí un poquito el gráfico, en el número uno, supongamos que eh el promedio de CP en una instancia sobrepaón umbral de 40%, es decir, e ¿Está pasando algo? El número uno, el primer paso sería que alerta, ¿verdad? Genera allí unas alarmas de cloudw y eso dispara e las políticas de autoescalamiento, es decir, envía la señal al al grupo de autoescalamiento. Bien, el paso dos sería este grupo de autoescalamiento actúa utilizando ciertas fórmulas, algoritmos, ¿verdad? Eh, y utilizando como entrada estas eh señales que le mandó Cloudwatch para ver si quita o agrega instancia. Y eso sería el paso dos, ¿verdad? El paso tres, recordemos que el low balancer a través del target group como pivote eh utilizar las eh las instancias que estén disponibles en el momento. Entonces, si el grupo de escalamiento elimina algo aquí, él le tiene que de alguna manera eh proveer la información al balanceador para que ey, ya Esto no existe. Entonces existe este o hay tres, ahora hay tres, ahora o ahora hay uno solamente, ¿verdad? En el tiempo. Entonces el paso tres se trata de eso. En el grupo, en el target room, él actualiza esa lista de disponibilidad y así el balanceó de carga tranquilo, sigue trabajando con lo que tiene. Bien, eso sería cómo funciona. Eh, ahora vamos a ver eh un poquito cómo se trabajó, el cómo de del módulo que se trabajó. Bien, les mencioné que utilicé Terrafone en la herramienta de infraestructura como código. Ventajas que te ayudan para este tipo de proyecto. Primero que es un lenguaje de configuración human readable. Sería es bastante amigable, intuitivo. La sintaxis se logra entender, es declarativo y ayuda en ese aspecto. Eh, permite hacer seguimiento de los cambios de infraestructura gracias al archivo de estado. Eh, sí, eso es algo importante. Estás trabajando con Terrafon. Eh, él te provee ahí promps cuando estás cultando tu comando y te dice eh cada vez que vas a hacer un cambio te quieres cambiar esto. Eh te te muestra la diferencia, quieres hacerte cambio, pero en tu nube tienes esto. Se va a crear esto, se va a editar esto y se va eh a borrar esto. Entonces, te probé esa herramienta para que tú te das seguridad sobre los cambios que vas a hacer. Tercero, el versionado. Puedes versionar ese código en GIP. Entonces, es chévere porque puedes trabajar en equipo. eh puedes eh viajar al pasado para ver un poquito otro tag de otra versión que tenía y todo eso. Y módulos, parte importante aquí porque los módulos son como para los lenguajes de programación vendrían siendo como eh, vamos a decirlo como funciones, como agrupaciones eh de cosas internas, de tareas internas que comunes que te permiten reusablas, además te permiten eh esa comunicación de entre módulos eh por medio de entradas y salidas como parámetro o como return. Yo utilicé los módulos para agrupar esos 20 recursos en diferentes grupos, balanceador de carga, política o escalamiento, networking, security y work. Y cada una de estas carpetas, el proyecto tiene definiciones de cinco, seis y todo lo demás. Bien, ahora sí, eh vamos a ver una una demostración un poquito para ver cómo se ejecutó y le voy a mostrar este el proceso de cómo se dispara una alarma y ver cómo actúa este el autoescalismo. Un momentico, quedó por ahí.
+Creo que 20 eh con lo d play al no a la playa para ver cómo se ejecuta el código de terra bien la demo de fusión de terrafo el ent inicial eh AWS cero recursos, no había nada, cero instancia, cero balancer, eh no hay donde está el grupo. Ah,
+vamos a ver qué pasa ahora. Este es el código del proyecto eh a la izquierda vemos el archivo mail que se está mostrando. Es como el punto de entrada, ahí donde define todas las cosas que quieres eh reusar, pues de todo tu código. Y yo estoy usando los módulos precisamente, ¿verdad? Networking, security, ALB, el cual hace match con estas carpetas organizadas aquí, estos grupos lógicos, eh, que tienen todos los recursos allí. Vamos a ver, a ver, eh, sí, bien, la aplicación. Aquí voy a ejecutar el comando. Eh, bien, lo que les mencionaba justamente de las herramientas que te da Terrafon, cuando tú vas a aplicar algún código, él hace esa comparación de los estados. Y entonces aquí me va a mostrar sugerencia o me va a decir que va a cambiar. El símbolo más es que es algo nuevo, el símbolo menos borrado, remarcado en rojo y entonces ahí ya tú este eh nota aquí aprovecho eh buena práctica. Siempre lean estas cosas porque de aquí dependen los cambios que van a a infraestructura y así se evitan de que puedan por allí meter algún cambio que sea inesperado. Adelante allí bastante porque tarda dale tr cu ahí se aplicó completo cuando actualizo ahora aquí a WS, entonces ahí se van a ver ya eh los recursos creados y vamos a ver ahorita solo hay una de forma general cómo se quedaron. Ahí van a ver el primero el advanc con sus detalles y todo eso. Después van a ver el grupo escalamiento. Aquí voy a mostrar las políticas que les mencioné. Si se dan cuenta, cuando veamos las políticas son como parte del grupo de funcionamiento, a pesar de que el terrafon nosotros lo definimos como un recurso pero aquí se refleja o lo ves aquí eh como una una subsección. Y bueno, la instancia creada. Eh, aquí vemos una instancia porque Bueno, porque cuando creé el grupo instalamiento, yo le dije, lo configuré, le dije, &quot;Mira, como siempre cuando se cree empieza con uno, digamos, como el estado inicial de tu servicio. Eh, ¿qué número debes definir allí?&quot; Bueno, el número que se en tu negocio o tu proceso, cuánto es más o menos la el tráfico que manejas y cuánto por cuánto debes empezar. Ahora vamos a leer aquí ahora una demostración de cómo se dispara una alarma, ¿verdad? eh relacionada al uso de CPU que tiene esta condición. Cuando el uso de CPU sea mayor al 40% no dentro de la ventana de 3 minutos, en los últimos 3 minutos. Eh, nada, ahí lo que hice eh básicamente me creé una un un script patch que hiciera constantemente eh consulta HTTP a la URL, el W balancer que se creó. Y entonces ¿Cuál es la idea o qué se espera que este gráfico primero de Cloudwatch, el cual esta línea roja es el umbral, eh empiecen a ver picos y se sobrepasa? Y cuando ocurra o cuando pase el tiempo más o menos de la ventana que se definió allí, se tiene que disparar esa alarma. Ahí adelanta bastante también porque tardé ahí hace un rato a tres cuartos. que a la derecha mejor gracias eh d un poquito para atrás. No, dale mucho más agito. Este, bueno, ahí el alarma se disparó y aquí podemos ver cuando vemos la autoescalamiento, se disparó la política a partir de eh una alarma, dice aquí una paró la política y si vemos automáticamente allí se crearon tres instancias. Entonces allí vemos el proceso de escalamiento, cómo se hace automatizado, eh controlados según parámetros que nosotros establezcamos. Eh ahora sí podemos volver a la presentación, por favor. Control al izquierda o derecha. la la presentación puede cerrar porque este es un video. Ah, sí, ahora sí o derecha. este de atletismo no veo ya me olvidado ya. Gracias. Bien, entonces ahora sí, la parte final, conclusiones. Primero, eh la alta disponibilidad en servicio Bismo, que es crucial. Eh tenemos una experiencia de hace unos días de AWS, entonces si tú tienes un negocio, tu negocio ya tiene una considerable cantidad de de cliente y todo eso, ya es tiempo de que ya tengas entre, digamos, tu mecanismo la alta disponibilidad con técnicas como esto, o incluso técnicas que ya son mucho más avanzado, incluso se puede aplicar a a cluster de cubernetes en este mismo esquema. Entonces, bueno, importante eh pruebas super importante también ahí existe una que se llaman las pruebas del caos. Justamente en el community vimos ahí un tuvimos un ponente, me acuerdo, mencionó bastante sobre esas pruebas y cómo cómo te ayudan a predecir los comportamientos cuando hay una caída. Entonces, es una buena práctica también, me parece. Eh, estos proveedores de cloud como WBS ya tienen esos recursos y entonces ustedes tienen que agarrar aquí, usarlo, conectarlo y probarlo y ver si está todo bien y ahí ya tienen su implementación. Eh, y bueno, herramientas de IAC es vital para cuando tienes que manejar, no sé, más de 10 recursos, más de 20 ya te ayuda muchísimo para este tipo de trabajo. Entonces, bueno, eso sería todo. Espero que les haya gustado y muchas gracias.
+Bueno, César, muchísimas gracias. Antes de concluir tu charla, ¿alguien ¿Alguna pregunta? Eh,
+sí, ya dime, dime.
+No, la pregunta era este, fijaste ahí que se autogeneraban nuevas instancias en base al tráfico y y en caso de ser tráfico malicioso, ¿cómo lo detectarías? Este, ¿hay algún paso previo para detectar eso y que no te no te genere distancia en Mm. A ver, a ver, pensemos un poquito. Puede ser.
+Sí, pienso que sí. E el tema es este,
+¿cómo utilizas esos recursos de WS que ya te dan el tema de las alarmas con CloudW? Y ellos tienen allí, si no me equivoco, manejan los relogs. Entonces, por ahí puedes de repente eh trackar algún tipo de logs y basado en eso, hacer como una una alarma costiertos patrones. pone malicioso.
+Sería algo que nosotros tenemos que configurar o es de parte. Sí, sí, porque este que yo usé son ya como que unos predefinidos que ellos tienen y ya te trae la condición. Tú lo que le dices es cuánto es el umbral, con cuánto empieza, pero tiene también para hacer algo más costo.
+Eh, tiene esa opción siempre libre para que oye, por si acaso tienes que hacer una condición de una fórmula bien compleja para escalar.
+Eh, me imagino que también debe tener algún mecanismo para leer loss porque el logs de cloudwatch, como vimos, un sistema monitoreo y si están los blogs puedes por ahí leerlos con algún patrón y de repente un patrón de no sé de cualquier tipo de cuestión de acceso o algo por ahí funciona. Entonces yo creo que sí te aconsejo que investigue lo voy a revisar y por ahí lo publico en el grupo también. Está interesante la pregunta.
+Dale, gracias.
+¿Alguien más tiene otra pregunta?
+Continuando conmigo, digamos, se podrían integrar así. watch con algún otro servicio de monitoreamiento, cosa de que si sospechamos de que se pudiese tratar de algún ataque o un intento de of service, el poder ir y apagar manualmente las distancias o de alguna manera bloquear o limitar ese intento de no de mm pienso que sí porque eh este tema de las alarmas eh tú defines las alarmas cómo va la entrada de las condiciones y de forma genérica AWS lo dibuja como que eh condiciones y acciones. Seguramente ese bloque de acciones eh más allá de simplemente escalar, de repente por allí también puede hacer algo tipo más custom de que genera una señal a algún otro servicio para que haga algo. Por ahí de repente lo puedes trabajar. Entonces sería revisar un poco ese esa parte de las acciones de las alarmas y a ver cómo pudiésemos integrar con algún una acción que corresponda a lo que tú necesites. Okay, gracias.
+¿Alguien más tiene alguna pregunta? Sería la última. Eh, ¿qué puedo preguntar? Claro. ¿Por qué Terrafor y no el servicio que tiene AWS para y y hacer?
+Eh, es el que tengo experiencia, es con el que he trabajado. Eh, sí, básicamente. sería eso, pero sí he visto pues que tiene ese de ellos es el cloud, ¿cómo que se llama?
+Cloud formation.
+Cloud formation,
+no es válido. Si tienen experiencia en uno y y les le funciona igual, está bueno.
+Claro, la única diferencia ahí es eh cloud formation, creo que solo para WS, ¿no?
+Solo para WS
+en el ter ahí puedes usar varios proveedores, teoría,
+pero es el mismo el mismo formato.
+El mismo recurso no lo puedes provisionar.
+Ah, el mismo recurso no tiene que como hacer una mímica.
+Hacer una mímica.
+Ah, buen punto. Interesante. Sí, pero bueno, sí, básicamente fue eso. Ya, ya justamente trabajé con Ter con y vamos a probar con la W que Ahí va.
+Okay. Eh, bueno, César, muchísimas gracias. Y a lo que se prepara Carlos, yo tengo alguna pregunta y bueno, por $25 en AWS, ¿alguien me puede decir dos storage classes de S3? Como por ejemplo Intelligent theory. S3 estándar y S3 Glacier.
+S3, ¿qué?
+Glacier.
+Estándar.
+No, no es de es otro producto. Está cerca. Está cerca. Está cerca.
+Ah, es otro producto.
+Ya, pero dos este tres estándar es uno. Otro más
+el E es el ejemplo. Ah,
+okay. Y porito ya se habá ya se irán dando cuenta que las preguntas deito son un poco más difíciles. En la presentación de César, él habló de estrategias de alta disponibilidad. ¿Alguien me podría decir cuáles fueron las tres estrategias que él puso en su diapositiva? Dale. para hacer de carga de replicación. Copia alguien que le gana
+ganaron.
+Okay. Bueno, ya</code></pre></div></details></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>
